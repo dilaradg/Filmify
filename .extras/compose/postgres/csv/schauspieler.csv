@@ -1,0 +1,46 @@
+id;vorname;nachname;rolle;film_id
+1000;Abigail;Breslin;Olive Hoover;1000
+1001;Steve;Carell;Frank Ginsberg;1000
+1002;Shameik;Moore;Miles Morales;1001
+1003;Hailee;Steinfeld;Gwen Stacy;1001
+1004;Max;Records;Max;1002
+1005;Catherine;Keener;Connie;1002
+1006;Robin;Williams;John Keating;1003
+1007;Ethan;Hawke;Todd Anderson;1003
+1008;Noriko;Hidaka;Satsuki;1004
+1009;Chika;Sakamoto;Mei;1004
+1010;Chieko;Baisho;Sophie;1005
+1011;Takuya;Kimura;Howl;1005
+1012;Hana;Sugisaki;Mary;1006
+1013;Ryunosuke;Kamiki;Peter;1006
+1014;Rumi;Hiiragi;Chihiro;1007
+1015;Miyu;Irino;Haku;1007
+1016;Naomi;Scott;Skye Riley;1008
+1017;Rosemarie;DeWitt;Elizabeth;1008
+1018;Kristen;Stewart;Bella Swan;1009
+1019;Robert;Pattinson;Edward Cullen;1009
+1020;Uma;Thurman;The Bride;1010
+1021;Lucy;Liu;O-Ren Ishii;1010
+1022;Jack;Nicholson;Jack Torrance;1011
+1023;Shelley;Duvall;Wendy Torrance;1011
+1024;Marlon;Brando;Don Vito Corleone;1012
+1025;Al;Pacino;Michael Corleone;1012
+1026;Jim;Carrey;Joel Barish;1013
+1027;Kate;Winslet;Clementine Kruczynski;1013
+1028;Daniel;Radcliffe;Harry Potter;1014
+1029;Emma;Watson;Hermine Granger;1014
+1030;Rupert;Grint;Ron Weasley;1014
+1031;Daniel;Radcliffe;Harry Potter;1015
+1032;Emma;Watson;Hermine Granger;1015
+1033;Daniel;Radcliffe;Harry Potter;1016
+1034;Emma;Watson;Hermine Granger;1016
+1035;Daniel;Radcliffe;Harry Potter;1017
+1036;Emma;Watson;Hermine Granger;1017
+1037;Daniel;Radcliffe;Harry Potter;1018
+1038;Emma;Watson;Hermine Granger;1018
+1039;Daniel;Radcliffe;Harry Potter;1019
+1040;Emma;Watson;Hermine Granger;1019
+1041;Daniel;Radcliffe;Harry Potter;1020
+1042;Emma;Watson;Hermine Granger;1020
+1043;Daniel;Radcliffe;Harry Potter;1021
+1044;Emma;Watson;Hermine Granger;1021
