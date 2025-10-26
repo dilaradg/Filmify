@@ -20,13 +20,8 @@
 
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { getLogger } from '../../logger/logger.js';
-import { Prisma, PrismaClient } from '../../generated/prisma/client.js';
-import { type FilmInclude } from '../../generated/prisma/models/Film.js';
+import { type Film, PrismaClient } from '../../generated/prisma/client.js';
 import { PrismaService } from './prisma-service.js';
-
-export type FilmMitTitel = Prisma.FilmGetPayload<{
-    include: { titel: true };
-}>;
 
 /**
  * Die Klasse `FilmService` implementiert das Lesen für Filme und greift
@@ -35,7 +30,6 @@ export type FilmMitTitel = Prisma.FilmGetPayload<{
 @Injectable()
 export class FilmService {
     readonly #prisma: PrismaClient;
-    readonly #includeTitel: FilmInclude = { titel: true };
     readonly #logger = getLogger(FilmService.name);
 
     constructor(prisma: PrismaService) {
@@ -47,12 +41,10 @@ export class FilmService {
      * @returns Ein JSON-Array mit den gefundenen Filmen.
      * @throws NotFoundException falls keine Filme gefunden wurden.
      */
-    async findAll(): Promise<readonly FilmMitTitel[]> {
+    async findAll(): Promise<readonly Film[]> {
         this.#logger.debug('findAll');
 
-        const filme: FilmMitTitel[] = await this.#prisma.film.findMany({
-            include: this.#includeTitel,
-        });
+        const filme: Film[] = await this.#prisma.film.findMany();
 
         if (filme.length === 0) {
             this.#logger.debug('findAll: Keine Filme gefunden');
