@@ -19,7 +19,6 @@
  */
 
 import { Controller, Get } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { HealthCheck, HealthCheckService } from '@nestjs/terminus';
 import { Public } from 'nest-keycloak-connect';
 
@@ -28,7 +27,6 @@ import { Public } from 'nest-keycloak-connect';
  */
 @Controller('health')
 @Public()
-@ApiTags('Health')
 export class HealthController {
     readonly #health: HealthCheckService;
 
@@ -38,7 +36,6 @@ export class HealthController {
 
     @Get('liveness')
     @HealthCheck()
-    @ApiOperation({ summary: 'Liveness überprüfen' })
     live() {
         return this.#health.check([
             () => ({
@@ -51,7 +48,6 @@ export class HealthController {
 
     @Get('readiness')
     @HealthCheck()
-    @ApiOperation({ summary: 'Readiness überprüfen' })
     ready() {
         // TODO "SELECT 1" mit Prisma
         return this.live();
