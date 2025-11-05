@@ -20,8 +20,28 @@
 
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { getLogger } from '../../logger/logger.js';
-import { type Film, PrismaClient } from '../../generated/prisma/client.js';
+import { Prisma, PrismaClient } from '../../generated/prisma/client.js';
+import { type FilmInclude } from '../../generated/prisma/models/Film.js';
 import { PrismaService } from './prisma-service.js';
+
+// Typdefinition für `findById`
+type FindByIdParams = {
+    // ID des gesuchten Films
+    readonly id: number;
+    /** Sollen Beschreibung und Schauspieler mitgeladen werden? */
+    readonly mitDetails?: boolean;
+};
+
+export type FilmMitBeschreibung = Prisma.FilmGetPayload<{
+    include: { beschreibung: true };
+}>;
+
+export type FilmMitBeschreibungUndSchauspieler = Prisma.FilmGetPayload<{
+    include: {
+        beschreibung: true;
+        schauspieler: true;
+    };
+}>;
 
 /**
  * Die Klasse `FilmService` implementiert das Lesen für Filme und greift
@@ -29,7 +49,15 @@ import { PrismaService } from './prisma-service.js';
  */
 @Injectable()
 export class FilmService {
+    static readonly ID_PATTERN = /^[1-9]\d{0,10}$/u;
+
     readonly #prisma: PrismaClient;
+    readonly #includeBeschreibung: FilmInclude = { beschreibung: true };
+    readonly #includeBeschreibungUndSchauspieler: FilmInclude = {
+        beschreibung: true,
+        schauspieler: true,
+    };
+
     readonly #logger = getLogger(FilmService.name);
 
     constructor(prisma: PrismaService) {
@@ -37,14 +65,49 @@ export class FilmService {
     }
 
     /**
-     * Filme asynchron suchen.
-     * @returns Ein JSON-Array mit den gefundenen Filmen.
+     * Ein Film asynchron anhand seiner ID suchen
+     * @param id ID des gesuchten Films
+     * @returns Das gefundene Film in einem Promise aus ES2015.
+     * @throws NotFoundException falls kein Film mit der ID existiert
+     */
+    async findById({
+        id,
+        mitDetails = false,
+    }: FindByIdParams): Promise<Readonly<FilmMitBeschreibungUndSchauspieler>> {
+        this.#logger.debug('findById: id=%d', id);
+
+        // Das Resultat ist null, falls kein Datensatz gefunden
+        // Lesen: Keine Transaktion erforderlich
+        const include = mitDetails
+            ? this.#includeBeschreibungUndSchauspieler
+            : this.#includeBeschreibung;
+        const film: FilmMitBeschreibungUndSchauspieler | null =
+            await this.#prisma.film.findUnique({
+                where: { id },
+                include,
+            });
+        if (film === null) {
+            this.#logger.debug('Es gibt keinen Film mit der ID %d', id);
+            throw new NotFoundException(
+                `Es gibt keinen Film mit der ID ${id}.`,
+            );
+        }
+
+        this.#logger.debug('findById: film=%o', film);
+        return film;
+    }
+
+    /**
+     * Alle Filme asynchron suchen.
+     * @returns Ein JSON-Array mit allen Filmen.
      * @throws NotFoundException falls keine Filme gefunden wurden.
      */
-    async findAll(): Promise<readonly Film[]> {
+    async findAll(): Promise<readonly FilmMitBeschreibung[]> {
         this.#logger.debug('findAll');
 
-        const filme: Film[] = await this.#prisma.film.findMany();
+        const filme: FilmMitBeschreibung[] = await this.#prisma.film.findMany({
+            include: this.#includeBeschreibung,
+        });
 
         if (filme.length === 0) {
             this.#logger.debug('findAll: Keine Filme gefunden');
