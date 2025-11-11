@@ -13,6 +13,7 @@ import {
     Post,
     Put,
     Res,
+    UseInterceptors,
 } from '@nestjs/common';
 import { type Response } from 'express';
 import { paths } from '../../config/paths.js';
@@ -23,6 +24,7 @@ import {
     type UpdateParams,
     FilmWriteService,
 } from '../service/film-write-service.js';
+import { FilmDTO } from './film-dto.js';
 
 /**
  * Die Controller-Klasse für die Verwaltung von Filmen (Schreiboperationen).
@@ -40,18 +42,19 @@ export class FilmWriteController {
     /**
      * Ein neuer Film wird asynchron angelegt.
      *
-     * @param film Film-Daten im Body des Request-Objekts.
+     * @param filmDTO Film-Daten im Body des Request-Objekts.
      * @param res Leeres Response-Objekt von Express.
      * @returns Response mit Statuscode 201 und der ID des neu angelegten Films
      *          oder Statuscode 400, falls die IMDB-ID bereits existiert.
      */
     @Post()
     async create(
-        @Body() film: FilmCreate,
+        @Body() filmDTO: FilmDTO,
         @Res() res: Response,
     ): Promise<Response> {
-        this.#logger.debug('create: film=%o', film);
+        this.#logger.debug('create: filmDTO=%o', filmDTO);
 
+        const film = this.#filmDtoToFilmCreate(filmDTO);
         const id = await this.#service.create(film);
         this.#logger.debug('create: id=%d', id);
 
@@ -62,7 +65,7 @@ export class FilmWriteController {
     /**
      * Ein vorhandener Film wird asynchron aktualisiert.
      *
-     * @param film Film-Daten im Body des Request-Objekts.
+     * @param filmDTO Film-Daten im Body des Request-Objekts.
      * @param id Pfad-Parameter für die ID.
      * @param version Versionsnummer aus dem Header If-Match.
      * @param res Leeres Response-Objekt von Express.
@@ -70,15 +73,15 @@ export class FilmWriteController {
      */
     @Put(':id')
     async update(
-        @Body() film: FilmCreate,
+        @Body() filmDTO: FilmDTO,
         @Param('id') id: string,
         @Headers('If-Match') version: string | undefined,
         @Res() res: Response,
     ): Promise<Response> {
         this.#logger.debug(
-            'update: id=%s, film=%o, version=%s',
+            'update: id=%s, filmDTO=%o, version=%s',
             id,
-            film,
+            filmDTO,
             version,
         );
 
@@ -91,6 +94,7 @@ export class FilmWriteController {
                 .send(msg);
         }
 
+        const film = this.#filmDtoToFilmUpdate(filmDTO);
         const updateParams: UpdateParams = {
             id: Number(id),
             film,
@@ -123,5 +127,44 @@ export class FilmWriteController {
         this.#logger.debug('delete: erfolgreich');
 
         return res.sendStatus(HttpStatus.NO_CONTENT);
+    }
+
+    #filmDtoToFilmCreate(filmDTO: FilmDTO): FilmCreate {
+        const schauspieler = filmDTO.schauspieler?.map((schauspielerDTO) => {
+            const schauspielerItem = {
+                vorname: schauspielerDTO.vorname,
+                nachname: schauspielerDTO.nachname,
+                rolle: schauspielerDTO.rolle ?? null,
+            };
+            return schauspielerItem;
+        });
+
+        const film: FilmCreate = {
+            version: 0,
+            imdbId: filmDTO.imdbId,
+            titel: filmDTO.titel,
+            bewertung: filmDTO.bewertung,
+            art: filmDTO.art ?? null,
+            dauerMin: filmDTO.dauerMin ?? null,
+            erscheinungsdatum: filmDTO.erscheinungsdatum ?? null,
+            beschreibung: {
+                create: {
+                    beschreibung: filmDTO.beschreibung.beschreibung,
+                },
+            },
+            schauspieler: { create: schauspieler ?? [] },
+        };
+        return film;
+    }
+
+    #filmDtoToFilmUpdate(filmDTO: FilmDTO) {
+        return {
+            imdbId: filmDTO.imdbId,
+            titel: filmDTO.titel,
+            bewertung: filmDTO.bewertung,
+            art: filmDTO.art ?? null,
+            dauerMin: filmDTO.dauerMin ?? null,
+            erscheinungsdatum: filmDTO.erscheinungsdatum ?? null,
+        };
     }
 }
