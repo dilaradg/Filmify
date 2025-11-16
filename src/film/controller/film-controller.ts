@@ -44,6 +44,7 @@ import {
 import { type Request, type Response } from 'express';
 import { Public } from 'nest-keycloak-connect';
 import { paths } from '../../config/paths.js';
+import { Filmart } from '../../generated/prisma/enums.js';
 import { getLogger } from '../../logger/logger.js';
 import { ResponseTimeInterceptor } from '../../logger/response-time.js';
 import {
@@ -54,7 +55,6 @@ import {
 import { createPageable } from '../service/pageable.js';
 import { type Suchparameter } from '../service/suchparameter.js';
 import { createPage, Page } from './page.js';
-import { Filmart } from '../../generated/prisma/enums.js';
 
 /**
  * Klasse für `FilmController`, um Queries in _OpenAPI_ bzw. Swagger zu

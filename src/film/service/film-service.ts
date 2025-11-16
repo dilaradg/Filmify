@@ -19,13 +19,13 @@
  */
 
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { getLogger } from '../../logger/logger.js';
 import { Prisma, PrismaClient } from '../../generated/prisma/client.js';
 import { type FilmInclude } from '../../generated/prisma/models/Film.js';
-import { PrismaService } from './prisma-service.js';
+import { getLogger } from '../../logger/logger.js';
 import { type Pageable } from './pageable.js';
-import { type Suchparameter } from './suchparameter.js';
+import { PrismaService } from './prisma-service.js';
 import { type Slice } from './slice.js';
+import { type Suchparameter } from './suchparameter.js';
 
 // Typdefinition für `findById`
 type FindByIdParams = {
@@ -126,7 +126,7 @@ export class FilmService {
         return filme;
     }
 
-      /**
+    /**
      * Filme mit Suchkriterien und Pagination suchen
      * @param suchparameter Suchkriterien
      * @param pageable Pagination-Informationen
@@ -205,9 +205,10 @@ export class FilmService {
 
         // Suche nach Bewertung (exakt oder größer/kleiner)
         if (suchparameter.bewertung !== undefined) {
-            const bewertung = typeof suchparameter.bewertung === 'string'
-                ? Number(suchparameter.bewertung)
-                : suchparameter.bewertung;
+            const bewertung =
+                typeof suchparameter.bewertung === 'string'
+                    ? Number(suchparameter.bewertung)
+                    : suchparameter.bewertung;
             where.bewertung = bewertung;
         }
 
