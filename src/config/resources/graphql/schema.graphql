@@ -20,18 +20,18 @@ schema {
   mutation: Mutation
 }
 
-"Funktionen, um Bücherdaten zu lesen"
+"Funktionen, um Filmdaten zu lesen"
 type Query {
-  buecher(suchparameter: SuchparameterInput): [Buch!]
+  filme(suchparameter: SuchparameterInput): [Film!]
 
-  buch(id: ID!): Buch
+  film(id: ID!): Film
 }
 
-"Funktionen, um Bücher neu anzulegen, zu aktualisieren oder zu löschen"
+"Funktionen, um Filme neu anzulegen, zu aktualisieren oder zu löschen"
 type Mutation {
-  create(input: BuchInput!): CreatePayload
+  create(input: FilmInput!): CreatePayload
 
-  update(input: BuchUpdateInput!): UpdatePayload
+  update(input: FilmUpdateInput!): UpdatePayload
 
   delete(id: ID!): DeletePayload
 
@@ -39,69 +39,49 @@ type Mutation {
   refresh(refreshToken: String!): TokenPayload
 }
 
-"Daten zum Titel eines Buches"
-type Titel {
-  titel: String! # eslint-disable-line @graphql-eslint/no-typename-prefix
-  untertitel: String
-}
-
-"Datenschema zu einem Buch, das gelesen wird"
-type Buch {
+"Datenschema zu einem Film, das gelesen wird"
+type Film {
   id: ID! # ID ist bei Apollo ein String
   version: Int!
-  isbn: String!
-  rating: Int
+  imdbId: String!
+  titel: String!
+  bewertung: Int
   art: Art
-  preis: Float!
-  lieferbar: Boolean
-  datum: String
-  homepage: String
-  schlagwoerter: [String]
-  titel: Titel! # 1:1-Beziehung
-  rabatt(short: Boolean): String! # field mit @ResolveField
+  dauerMin: Int
+  erscheinungsdatum: String
 }
 
-"Enum-Typ für die Art eines Buches"
+"Enum-Typ für die Art eines Filmes"
 enum Art {
-  EPUB
-  HARDCOVER
-  PAPERBACK
+  ROMCOM
+  THRILLER
+  DRAMA
+  HORROR
+  ANIME
+  ANIMATION
+  ACTION
+  FANTASY
+  SCI_FI
+  MYSTERY
+  BIOGRAFIE
 }
 
-"Suchparameter für Bücher"
+"Suchparameter für Filme"
 input SuchparameterInput {
   titel: String
-  isbn: String
-  rating: Int
+  imdbId: String
+  bewertung: Int
   art: Art
-  lieferbar: Boolean
 }
 
-"Daten zum Titel eines neuen Buches"
-input TitelInput {
+"Daten für einen neuen Film"
+input FilmInput {
+  imdbId: String!
   titel: String!
-  untertitel: String
-}
-
-"Daten zu den Abbildungen eines Buches"
-input AbbildungInput {
-  beschriftung: String!
-  contentType: String!
-}
-
-"Daten für ein neues Buch"
-input BuchInput {
-  isbn: String
-  rating: Int
+  bewertung: Int
   art: Art
-  preis: Float
-  rabatt: Float
-  lieferbar: Boolean
-  datum: String
-  homepage: String
-  schlagwoerter: [String]
-  titel: TitelInput!
-  abbildungen: [AbbildungInput!]
+  dauerMin: Int
+  erscheinungsdatum: String
 }
 
 "Generierte ID bei erfolgreichem Neuanlegen"
@@ -109,19 +89,16 @@ type CreatePayload {
   id: ID
 }
 
-"Daten für ein zu änderndes Buch"
-input BuchUpdateInput {
-  id: ID
-  version: Int
-  isbn: String
-  rating: Int
+"Daten für einen zu ändernden Film"
+input FilmUpdateInput {
+  id: ID!
+  version: Int!
+  imdbId: String
+  titel: String
+  bewertung: Int
   art: Art
-  preis: Float
-  rabatt: Float
-  lieferbar: Boolean
-  datum: String
-  homepage: String
-  schlagwoerter: [String]
+  dauerMin: Int
+  erscheinungsdatum: String
 }
 
 "Neue Versionsnummer als Resultat bei erfolgreichem Aktualisieren"
