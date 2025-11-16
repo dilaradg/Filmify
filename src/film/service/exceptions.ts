@@ -24,18 +24,18 @@ import { HttpException, HttpStatus } from '@nestjs/common';
  */
 
 /**
- * Exception-Klasse für eine bereits existierende IMDB-Nummer.
+ * Exception-Klasse für eine bereits existierende imdbId-Nummer.
  */
 export class ImdbIdExistsException extends HttpException {
-    readonly imdb: string | undefined;
+    readonly imdbId: string | undefined;
 
-    constructor(imdb: string | undefined) {
+    constructor(imdbId: string | undefined) {
         super(
-            `Die IMDB-Nummer ${imdb} existiert bereits.`,
+            `Die IMDB-Nummer ${imdbId} existiert bereits.`,
             // TODO https://github.com/nestjs/nest/issues/15624 https://github.com/nodejs/node/blob/main/lib/_http_server.js#L159
             HttpStatus.UNPROCESSABLE_ENTITY,
         );
-        this.imdb = imdb;
+        this.imdbId = imdbId;
     }
 }
 
