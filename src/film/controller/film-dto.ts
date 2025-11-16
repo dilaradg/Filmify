@@ -8,7 +8,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
-    ArrayUnique,
     IsArray,
     IsISO8601,
     IsInt,
