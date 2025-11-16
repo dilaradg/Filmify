@@ -15,11 +15,11 @@
 
 -- Aufruf:
 -- docker compose exec db bash
--- psql --dbname=buch --username=postgres --file=/sql/copy-csv.sql
+-- psql --dbname=film --username=film --file=/sql/copy-csv.sql
 
-SET search_path TO buch;
+SET search_path TO film;
 
 -- https://www.postgresql.org/docs/current/sql-copy.html
-COPY buch FROM '/csv/buch.csv' (FORMAT csv, DELIMITER ';', HEADER true);
-COPY titel FROM '/csv/titel.csv' (FORMAT csv, DELIMITER ';', HEADER true);
-COPY abbildung FROM '/csv/abbildung.csv' (FORMAT csv, DELIMITER ';', HEADER true);
+COPY film FROM '/csv/film.csv' (FORMAT csv, DELIMITER ';', HEADER true);
+COPY beschreibung FROM '/csv/beschreibung.csv' (FORMAT csv, DELIMITER ';', HEADER true);
+COPY schauspieler FROM '/csv/schauspieler.csv' (FORMAT csv, DELIMITER ';', HEADER true);

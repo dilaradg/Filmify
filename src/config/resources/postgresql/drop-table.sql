@@ -1,4 +1,4 @@
--- Copyright (C) 2023 - present Juergen Zimmermann, Hochschule Karlsruhe
+-- Copyright (C) 2022 - present Juergen Zimmermann, Hochschule Karlsruhe
 --
 -- This program is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -15,16 +15,16 @@
 
 -- Aufruf:
 -- docker compose exec db bash
--- psql --dbname=buch --username=buch --file=/sql/drop-table.sql
+-- psql --dbname=film --username=film --file=/sql/drop-table.sql
 
-set search_path to 'buch';
+set search_path to 'film';
 
 -- https://www.postgresql.org/docs/current/sql-droptable.html
 
-DROP TABLE IF EXISTS buch_file CASCADE;
-DROP TABLE IF EXISTS abbildung CASCADE;
-DROP TABLE IF EXISTS titel CASCADE;
-DROP TABLE IF EXISTS buch CASCADE;
+DROP TABLE IF EXISTS film_file CASCADE;
+DROP TABLE IF EXISTS schauspieler CASCADE;
+DROP TABLE IF EXISTS beschreibung CASCADE;
+DROP TABLE IF EXISTS film CASCADE;
 
 -- https://www.postgresql.org/docs/current/sql-droptype.html
-DROP TYPE IF EXISTS buchart;
+DROP TYPE IF EXISTS filmart;

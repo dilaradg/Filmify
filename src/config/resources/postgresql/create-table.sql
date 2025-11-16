@@ -15,7 +15,7 @@
 
 -- Aufruf:
 -- docker compose exec db bash
--- psql --dbname=buch --username=buch --file=/sql/create-table.sql
+-- psql --dbname=film --username=film --file=/sql/create-table.sql
 
 -- text statt varchar(n):
 -- "There is no performance difference among these three types, apart from a few extra CPU cycles
@@ -23,85 +23,77 @@
 -- ggf. CHECK(char_length(nachname) <= 255)
 
 -- Indexe auflisten:
--- psql --dbname=buch --username=buch
+-- psql --dbname=film --username=film
 --  SELECT   tablename, indexname, indexdef, tablespace
 --  FROM     pg_indexes
---  WHERE    schemaname = 'buch'
+--  WHERE    schemaname = 'film'
 --  ORDER BY tablename, indexname;
 --  \q
 
 -- https://www.postgresql.org/docs/current/manage-ag-tablespaces.html
-SET default_tablespace = buchspace;
+SET default_tablespace = filmspace;
 
 -- https://www.postgresql.org/docs/current/app-psql.html
 -- https://www.postgresql.org/docs/current/ddl-schemas.html
 -- https://www.postgresql.org/docs/current/ddl-schemas.html#DDL-SCHEMAS-CREATE
 -- "user-private schema" (Default-Schema: public)
-CREATE SCHEMA IF NOT EXISTS AUTHORIZATION buch;
+CREATE SCHEMA IF NOT EXISTS AUTHORIZATION film;
 
-ALTER ROLE buch SET search_path = 'buch';
-set search_path to 'buch';
+ALTER ROLE film SET search_path = 'film';
+set search_path to 'film';
 
 -- https://www.postgresql.org/docs/current/sql-createtype.html
 -- https://www.postgresql.org/docs/current/datatype-enum.html
-CREATE TYPE buchart AS ENUM ('EPUB', 'HARDCOVER', 'PAPERBACK');
+CREATE TYPE filmart AS ENUM ('ROMCOM', 'THRILLER', 'DRAMA', 'HORROR', 'ANIME', 'ANIMATION', 'ACTION', 'FANTASY', 'SCIFI', 'MYSTERY', 'BIOGRAFIE');
 
 -- https://www.postgresql.org/docs/current/sql-createtable.html
 -- https://www.postgresql.org/docs/current/datatype.html
-CREATE TABLE IF NOT EXISTS buch (
+CREATE TABLE IF NOT EXISTS film (
                   -- https://www.postgresql.org/docs/current/datatype-numeric.html#DATATYPE-INT
                   -- https://www.postgresql.org/docs/current/ddl-constraints.html#DDL-CONSTRAINTS-PRIMARY-KEYS
                   -- impliziter Index fuer Primary Key
                   -- "GENERATED ALWAYS AS IDENTITY" gemaess SQL-Standard
-                  -- entspricht SERIAL mit generierter Sequenz buch_id_seq
+                  -- entspricht SERIAL mit generierter Sequenz  film_id_seq
     id            integer GENERATED ALWAYS AS IDENTITY(START WITH 1000) PRIMARY KEY,
                   -- https://www.postgresql.org/docs/current/ddl-constraints.html#id-1.5.4.6.6
     version       integer NOT NULL DEFAULT 0,
                   -- impliziter Index als B-Baum durch UNIQUE
                   -- https://www.postgresql.org/docs/current/ddl-constraints.html#DDL-CONSTRAINTS-UNIQUE-CONSTRAINTS
-    isbn          text NOT NULL UNIQUE,
+    imdb_id       text NOT NULL UNIQUE,
+    titel         text NOT NULL,
                   -- https://www.postgresql.org/docs/current/ddl-constraints.html#DDL-CONSTRAINTS-CHECK-CONSTRAINTS
                   -- https://www.postgresql.org/docs/current/functions-matching.html#FUNCTIONS-POSIX-REGEXP
-    rating        integer NOT NULL CHECK (rating >= 0 AND rating <= 5),
-    art           buchart,
+    bewertung        integer NOT NULL CHECK (bewertung >= 0 AND bewertung <= 5),
+    art           filmart,
                   -- https://www.postgresql.org/docs/current/datatype-numeric.html#DATATYPE-NUMERIC-DECIMAL
-                  -- 10 Stellen, davon 2 Nachkommastellen
-    preis         decimal(8,2) NOT NULL,
-    rabatt        decimal(4,3) NOT NULL,
-                  -- https://www.postgresql.org/docs/current/datatype-boolean.html
-    lieferbar     boolean NOT NULL DEFAULT FALSE,
-                  -- https://www.postgresql.org/docs/current/datatype-datetime.html
-    datum         date,
-    homepage      text,
-                  -- https://www.postgresql.org/docs/current/datatype-json.html
-    schlagwoerter jsonb,
+    dauer_min   integer CHECK (dauer_min > 0), 
+    erscheinungsdatum  date,
                   -- https://www.postgresql.org/docs/current/datatype-datetime.html
     erzeugt       timestamp NOT NULL DEFAULT NOW(),
     aktualisiert  timestamp NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS titel (
-    id          integer GENERATED ALWAYS AS IDENTITY(START WITH 1000) PRIMARY KEY,
-    titel       text NOT NULL,
-    untertitel  text,
-                -- https://www.postgresql.org/docs/current/ddl-constraints.html#DDL-CONSTRAINTS-FK
-    buch_id     integer NOT NULL UNIQUE REFERENCES buch ON DELETE CASCADE
-);
-
-
-CREATE TABLE IF NOT EXISTS abbildung (
+CREATE TABLE IF NOT EXISTS beschreibung (
     id              integer GENERATED ALWAYS AS IDENTITY(START WITH 1000) PRIMARY KEY,
-    beschriftung    text NOT NULL,
-    content_type    text NOT NULL,
-    buch_id         integer NOT NULL REFERENCES buch ON DELETE CASCADE
+    beschreibung    text NOT NULL,
+                    -- https://www.postgresql.org/docs/current/ddl-constraints.html#DDL-CONSTRAINTS-FK
+    film_id         integer NOT NULL UNIQUE REFERENCES film ON DELETE CASCADE
 );
-CREATE INDEX IF NOT EXISTS abbildung_buch_id_idx ON abbildung(buch_id);
 
-CREATE TABLE IF NOT EXISTS buch_file (
+CREATE TABLE IF NOT EXISTS schauspieler (
+    id              integer GENERATED ALWAYS AS IDENTITY(START WITH 1000) PRIMARY KEY,
+    vorname         text NOT NULL,
+    nachname        text NOT NULL,
+    rolle           text,
+    film_id         integer NOT NULL REFERENCES film ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS schauspieler_film_id_idx ON schauspieler(film_id);
+
+CREATE TABLE IF NOT EXISTS film_file (
     id              integer GENERATED ALWAYS AS IDENTITY(START WITH 1000) PRIMARY KEY,
     data            bytea NOT NULL,
     filename        text NOT NULL,
     mimetype        text,
-    buch_id         integer NOT NULL UNIQUE REFERENCES buch ON DELETE CASCADE
+    film_id         integer NOT NULL UNIQUE REFERENCES film ON DELETE CASCADE
 );
-CREATE INDEX IF NOT EXISTS buch_file_buch_id_idx ON buch_file(buch_id);
+CREATE INDEX IF NOT EXISTS film_file_film_id_idx ON film_file(film_id);
