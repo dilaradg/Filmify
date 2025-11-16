@@ -23,6 +23,9 @@ import { getLogger } from '../../logger/logger.js';
 import { Prisma, PrismaClient } from '../../generated/prisma/client.js';
 import { type FilmInclude } from '../../generated/prisma/models/Film.js';
 import { PrismaService } from './prisma-service.js';
+import { type Pageable } from './pageable.js';
+import { type Suchparameter } from './suchparameter.js';
+import { type Slice } from './slice.js';
 
 // Typdefinition für `findById`
 type FindByIdParams = {
@@ -42,6 +45,11 @@ export type FilmMitBeschreibungUndSchauspieler = Prisma.FilmGetPayload<{
         schauspieler: true;
     };
 }>;
+
+export type FilmSlice = {
+    readonly content: readonly FilmMitBeschreibung[];
+    readonly totalElements: number;
+};
 
 /**
  * Die Klasse `FilmService` implementiert das Lesen für Filme und greift
@@ -116,5 +124,111 @@ export class FilmService {
 
         this.#logger.debug('findAll: %d Filme gefunden', filme.length);
         return filme;
+    }
+
+      /**
+     * Filme mit Suchkriterien und Pagination suchen
+     * @param suchparameter Suchkriterien
+     * @param pageable Pagination-Informationen
+     * @returns Paginierte Liste von Filmen
+     */
+    async find(
+        suchparameter: Suchparameter,
+        pageable: Pageable,
+    ): Promise<Slice<FilmMitBeschreibung>> {
+        this.#logger.debug(
+            'find: suchparameter=%o, pageable=%o',
+            suchparameter,
+            pageable,
+        );
+
+        // Where-Bedingung aufbauen basierend auf Suchparametern
+        const where = this.#buildWhereCondition(suchparameter);
+
+        // Gesamtanzahl der Filme mit den Suchkriterien
+        const totalElements = await this.#prisma.film.count({ where });
+
+        // Berechne skip und take aus pageable
+        const skip = pageable.number * pageable.size;
+        const take = pageable.size;
+
+        // Paginierte Filme abrufen
+        const filme: FilmMitBeschreibung[] = await this.#prisma.film.findMany({
+            where,
+            include: this.#includeBeschreibung,
+            skip,
+            take,
+            orderBy: { id: 'asc' }, // Standard-Sortierung nach ID
+        });
+
+        this.#logger.debug(
+            'find: %d von %d Filmen gefunden',
+            filme.length,
+            totalElements,
+        );
+
+        return {
+            content: filme,
+            totalElements,
+        };
+    }
+
+    /**
+     * Anzahl aller Filme ermitteln
+     * @returns Anzahl der Filme
+     */
+    async count(): Promise<number> {
+        this.#logger.debug('count');
+        const anzahl = await this.#prisma.film.count();
+        this.#logger.debug('count: %d', anzahl);
+        return anzahl;
+    }
+
+    /**
+     * Baut die WHERE-Bedingung für Prisma basierend auf Suchparametern auf
+     */
+    #buildWhereCondition(suchparameter: Suchparameter): Prisma.FilmWhereInput {
+        const where: Prisma.FilmWhereInput = {};
+
+        // Suche nach IMDB-ID (exakt)
+        if (suchparameter.imdbId !== undefined) {
+            where.imdbId = suchparameter.imdbId;
+        }
+
+        // Suche nach Titel (enthält, case-insensitive)
+        if (suchparameter.titel !== undefined) {
+            where.titel = {
+                contains: suchparameter.titel,
+                mode: 'insensitive',
+            };
+        }
+
+        // Suche nach Bewertung (exakt oder größer/kleiner)
+        if (suchparameter.bewertung !== undefined) {
+            const bewertung = typeof suchparameter.bewertung === 'string'
+                ? Number(suchparameter.bewertung)
+                : suchparameter.bewertung;
+            where.bewertung = bewertung;
+        }
+
+        // Suche nach Art (exakt)
+        if (suchparameter.art !== undefined) {
+            where.art = suchparameter.art;
+        }
+
+        // Suche nach Dauer in Minuten
+        if (suchparameter.dauerMin !== undefined) {
+            where.dauerMin = suchparameter.dauerMin;
+        }
+
+        // Suche nach Erscheinungsdatum
+        if (suchparameter.erscheinungsdatum !== undefined) {
+            // Konvertiere String zu Date
+            const datum = new Date(suchparameter.erscheinungsdatum);
+            where.erscheinungsdatum = datum;
+        }
+
+        this.#logger.debug('#buildWhereCondition: where=%o', where);
+        return where;
     }
 }
