@@ -1,23 +1,7 @@
-// Copyright (C) 2016 - present Juergen Zimmermann, Hochschule Karlsruhe
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
-
 import { HttpStatus } from '@nestjs/common';
-import BigNumber from 'bignumber.js';
 import { beforeAll, describe, expect, test } from 'vitest';
-import { type BuchDTO } from '../../../src/buch/controller/buch-dto.js';
-import { BuchService } from '../../../src/buch/service/buch-service.js';
+import { type FilmDTO } from '../../../src/film/controller/film-dto.js';
+import { FilmService } from '../../../src/film/service/film-service.js';
 import {
     APPLICATION_JSON,
     AUTHORIZATION,
@@ -32,59 +16,54 @@ import { getToken } from '../token.mjs';
 // -----------------------------------------------------------------------------
 // T e s t d a t e n
 // -----------------------------------------------------------------------------
-const neuesBuch: Omit<BuchDTO, 'preis' | 'rabatt'> & {
-    preis: number;
-    rabatt: number;
-} = {
-    isbn: '978-0-007-00644-1',
-    rating: 1,
-    art: 'HARDCOVER',
-    preis: 99.99,
-    rabatt: 0.0123,
-    lieferbar: true,
-    datum: '2025-02-28T00:00:00Z',
-    homepage: 'https://post.rest',
-    schlagwoerter: ['JAVASCRIPT', 'TYPESCRIPT'],
-    titel: {
-        titel: 'Titelpost',
-        untertitel: 'untertitelpos',
+const neuerFilm: FilmDTO = {
+    imdbId: 'tt1234567',
+    titel: 'Test Film',
+    bewertung: 5,
+    art: 'DRAMA',
+    dauerMin: 120,
+    erscheinungsdatum: '2024-01-15T00:00:00Z',
+    beschreibung: {
+        beschreibung:
+            'Eine spannende Geschichte über Freundschaft und Abenteuer.',
     },
-    abbildungen: [
+    schauspieler: [
         {
-            beschriftung: 'Abb. 1',
-            contentType: 'img/png',
+            vorname: 'Tom',
+            nachname: 'Hanks',
+            rolle: 'Hauptrolle',
+        },
+        {
+            vorname: 'Meryl',
+            nachname: 'Streep',
+            rolle: 'Nebenrolle',
         },
     ],
 };
-const neuesBuchInvalid: Record<string, unknown> = {
-    isbn: 'falsche-ISBN',
-    rating: -1,
+
+const neuerFilmInvalid: Record<string, unknown> = {
+    imdbId: 'falsche-imdb-id',
+    titel: '',
+    bewertung: -1,
     art: 'UNSICHTBAR',
-    preis: -1,
-    rabatt: 2,
-    lieferbar: true,
-    datum: '12345-123-123',
-    homepage: 'anyHomepage',
-    titel: {
-        titel: '?!',
-        untertitel: 'Untertitelinvalid',
+    dauerMin: -50,
+    erscheinungsdatum: '12345-123-123',
+    beschreibung: {
+        beschreibung: '',
     },
 };
-const neuesBuchIsbnExistiert: BuchDTO = {
-    isbn: '978-3-897-22583-1',
-    rating: 1,
-    art: 'EPUB',
-    preis: new BigNumber(99.99),
-    rabatt: new BigNumber(0.09),
-    lieferbar: true,
-    datum: '2025-02-28T00:00:00Z',
-    homepage: 'https://post.isbn/',
-    schlagwoerter: ['JAVASCRIPT', 'TYPESCRIPT'],
-    titel: {
-        titel: 'Titelpostisbn',
-        untertitel: 'Untertitelpostisbn',
+
+const neuerFilmImdbIdExistiert: FilmDTO = {
+    imdbId: 'tt0449059',
+    titel: 'Duplicate Film',
+    bewertung: 4,
+    art: 'ROMCOM',
+    dauerMin: 100,
+    erscheinungsdatum: '2024-02-20T00:00:00Z',
+    beschreibung: {
+        beschreibung: 'Ein Film mit bereits existierender IMDB-ID.',
     },
-    abbildungen: [],
+    schauspieler: [],
 };
 
 type MessageType = { message: string };
@@ -100,7 +79,7 @@ describe('POST /rest', () => {
         token = await getToken('admin', 'p');
     });
 
-    test('Neues Buch', async () => {
+    test('Neuer Film', async () => {
         // given
         const headers = new Headers();
         headers.append(CONTENT_TYPE, APPLICATION_JSON);
@@ -109,7 +88,7 @@ describe('POST /rest', () => {
         // when
         const response = await fetch(restURL, {
             method: POST,
-            body: JSON.stringify(neuesBuch),
+            body: JSON.stringify(neuerFilm),
             headers,
         });
 
@@ -131,30 +110,29 @@ describe('POST /rest', () => {
         const idStr = location?.slice(indexLastSlash + 1);
 
         expect(idStr).toBeDefined();
-        expect(BuchService.ID_PATTERN.test(idStr ?? '')).toBe(true);
+        expect(FilmService.ID_PATTERN.test(idStr ?? '')).toBe(true);
     });
 
-    test.concurrent('Neues Buch mit ungueltigen Daten', async () => {
+    test.concurrent('Neuer Film mit ungueltigen Daten', async () => {
         // given
         const headers = new Headers();
         headers.append(CONTENT_TYPE, APPLICATION_JSON);
         headers.append(AUTHORIZATION, `${BEARER} ${token}`);
 
         const expectedMsg = [
-            expect.stringMatching(/^isbn /u),
-            expect.stringMatching(/^rating /u),
+            expect.stringMatching(/^imdbId /u),
+            expect.stringMatching(/^titel /u),
+            expect.stringMatching(/^bewertung /u),
             expect.stringMatching(/^art /u),
-            expect.stringMatching(/^preis /u),
-            expect.stringMatching(/^rabatt /u),
-            expect.stringMatching(/^datum /u),
-            expect.stringMatching(/^homepage /u),
-            expect.stringMatching(/^titel.titel /u),
+            expect.stringMatching(/^dauerMin /u),
+            expect.stringMatching(/^erscheinungsdatum /u),
+            expect.stringMatching(/^beschreibung.beschreibung /u),
         ];
 
         // when
         const response = await fetch(restURL, {
             method: POST,
-            body: JSON.stringify(neuesBuchInvalid),
+            body: JSON.stringify(neuerFilmInvalid),
             headers,
         });
 
@@ -171,41 +149,46 @@ describe('POST /rest', () => {
         expect(messages).toStrictEqual(expect.arrayContaining(expectedMsg));
     });
 
-    test.concurrent('Neues Buch, aber die ISBN existiert bereits', async () => {
-        // given
-        const headers = new Headers();
-        headers.append(CONTENT_TYPE, APPLICATION_JSON);
-        headers.append(AUTHORIZATION, `${BEARER} ${token}`);
+    test.concurrent(
+        'Neuer Film, aber die IMDB-ID existiert bereits',
+        async () => {
+            // given
+            const headers = new Headers();
+            headers.append(CONTENT_TYPE, APPLICATION_JSON);
+            headers.append(AUTHORIZATION, `${BEARER} ${token}`);
 
-        // when
-        const response = await fetch(restURL, {
-            method: POST,
-            body: JSON.stringify(neuesBuchIsbnExistiert),
-            headers,
-        });
+            // when
+            const response = await fetch(restURL, {
+                method: POST,
+                body: JSON.stringify(neuerFilmImdbIdExistiert),
+                headers,
+            });
 
-        // then
-        const { status } = response;
+            // then
+            const { status } = response;
 
-        expect(status).toBe(HttpStatus.UNPROCESSABLE_ENTITY);
+            expect(status).toBe(HttpStatus.UNPROCESSABLE_ENTITY);
 
-        const body = (await response.json()) as MessageType;
+            const body = (await response.json()) as MessageType;
 
-        expect(body.message).toStrictEqual(expect.stringContaining('ISBN'));
-    });
+            expect(body.message).toStrictEqual(
+                expect.stringContaining('IMDB-ID'),
+            );
+        },
+    );
 
-    test.concurrent('Neues Buch, aber ohne Token', async () => {
+    test.concurrent('Neuer Film, aber ohne Token', async () => {
         // when
         const { status } = await fetch(restURL, {
             method: POST,
-            body: JSON.stringify(neuesBuch),
+            body: JSON.stringify(neuerFilm),
         });
 
         // then
         expect(status).toBe(HttpStatus.UNAUTHORIZED);
     });
 
-    test.concurrent('Neues Buch, aber mit falschem Token', async () => {
+    test.concurrent('Neuer Film, aber mit falschem Token', async () => {
         // given
         const headers = new Headers();
         headers.append(CONTENT_TYPE, APPLICATION_JSON);
@@ -214,7 +197,7 @@ describe('POST /rest', () => {
         // when
         const { status } = await fetch(restURL, {
             method: POST,
-            body: JSON.stringify(neuesBuch),
+            body: JSON.stringify(neuerFilm),
             headers,
         });
 

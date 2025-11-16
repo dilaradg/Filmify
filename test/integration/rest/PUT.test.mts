@@ -1,22 +1,6 @@
-// Copyright (C) 2025 - present Juergen Zimmermann, Hochschule Karlsruhe
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
-
 import { HttpStatus } from '@nestjs/common';
-import BigNumber from 'bignumber.js';
 import { beforeAll, describe, expect, test } from 'vitest';
-import { type BuchDtoOhneRef } from '../../../src/buch/controller/buch-dto.js';
+import { type FilmDtoOhneRef } from '../../../src/film/controller/film-dto.js';
 import {
     APPLICATION_JSON,
     AUTHORIZATION,
@@ -31,62 +15,42 @@ import { getToken } from '../token.mjs';
 // -----------------------------------------------------------------------------
 // T e s t d a t e n
 // -----------------------------------------------------------------------------
-const geaendertesBuch: Omit<BuchDtoOhneRef, 'preis' | 'rabatt'> & {
-    preis: number;
-    rabatt: number;
-} = {
-    isbn: '978-0-201-63361-0',
-    rating: 5,
-    art: 'HARDCOVER',
-    preis: 3333,
-    rabatt: 0.033,
-    lieferbar: true,
-    datum: '2025-03-03T00:00:00Z',
-    homepage: 'https://geaendert.put.rest',
-    schlagwoerter: ['JAVA'],
+const geaenderterFilm: FilmDtoOhneRef = {
+    imdbId: 'tt0449059',
+    titel: 'Little Miss Sunshine - Geändert',
+    bewertung: 4,
+    art: 'DRAMA',
+    dauerMin: 105,
+    erscheinungsdatum: '2006-08-01T00:00:00Z',
 };
-const idVorhanden = '30';
+const idVorhanden = '1000';
 
-const geaendertesBuchIdNichtVorhanden: Omit<
-    BuchDtoOhneRef,
-    'preis' | 'rabatt'
-> & {
-    preis: number;
-    rabatt: number;
-} = {
-    isbn: '978-0-007-09732-6',
-    rating: 4,
-    art: 'EPUB',
-    preis: 44.4,
-    rabatt: 0.044,
-    lieferbar: true,
-    datum: '2025-02-04T00:00:00Z',
-    homepage: 'https://acme.de',
-    schlagwoerter: ['JAVASCRIPT'],
+const geaenderterFilmIdNichtVorhanden: FilmDtoOhneRef = {
+    imdbId: 'tt9999999',
+    titel: 'Nicht vorhandener Film',
+    bewertung: 3,
+    art: 'ACTION',
+    dauerMin: 90,
+    erscheinungsdatum: '2024-01-01T00:00:00Z',
 };
 const idNichtVorhanden = '999999';
 
-const geaendertesBuchInvalid: Record<string, unknown> = {
-    isbn: 'falsche-ISBN',
-    rating: -1,
+const geaenderterFilmInvalid: Record<string, unknown> = {
+    imdbId: 'falsche-imdb-id',
+    titel: '',
+    bewertung: -1,
     art: 'UNSICHTBAR',
-    preis: -1,
-    rabatt: 2,
-    lieferbar: true,
-    datum: '12345-123-123',
-    homepage: 'anyHomepage',
+    dauerMin: -50,
+    erscheinungsdatum: '12345-123-123',
 };
 
-const veraltesBuch: BuchDtoOhneRef = {
-    isbn: '978-0-007-09732-6',
-    rating: 1,
-    art: 'EPUB',
-    preis: new BigNumber(44.4),
-    rabatt: new BigNumber(0.04),
-    lieferbar: true,
-    datum: '2025-02-04T00:00:00Z',
-    homepage: 'https://acme.de',
-    schlagwoerter: ['JAVASCRIPT'],
+const veralteterFilm: FilmDtoOhneRef = {
+    imdbId: 'tt0449059',
+    titel: 'Veralteter Film',
+    bewertung: 2,
+    art: 'ROMCOM',
+    dauerMin: 100,
+    erscheinungsdatum: '2006-07-26T00:00:00Z',
 };
 
 // -----------------------------------------------------------------------------
@@ -100,7 +64,7 @@ describe('PUT /rest/:id', () => {
         token = await getToken('admin', 'p');
     });
 
-    test('Vorhandenes Buch aendern', async () => {
+    test('Vorhandenen Film aendern', async () => {
         // given
         const url = `${restURL}/${idVorhanden}`;
         const headers = new Headers();
@@ -111,7 +75,7 @@ describe('PUT /rest/:id', () => {
         // when
         const { status } = await fetch(url, {
             method: PUT,
-            body: JSON.stringify(geaendertesBuch),
+            body: JSON.stringify(geaenderterFilm),
             headers,
         });
 
@@ -119,7 +83,7 @@ describe('PUT /rest/:id', () => {
         expect(status).toBe(HttpStatus.NO_CONTENT);
     });
 
-    test('Nicht-vorhandenes Buch aendern', async () => {
+    test('Nicht-vorhandenen Film aendern', async () => {
         // given
         const url = `${restURL}/${idNichtVorhanden}`;
         const headers = new Headers();
@@ -130,7 +94,7 @@ describe('PUT /rest/:id', () => {
         // when
         const { status } = await fetch(url, {
             method: PUT,
-            body: JSON.stringify(geaendertesBuchIdNichtVorhanden),
+            body: JSON.stringify(geaenderterFilmIdNichtVorhanden),
             headers,
         });
 
@@ -138,7 +102,7 @@ describe('PUT /rest/:id', () => {
         expect(status).toBe(HttpStatus.NOT_FOUND);
     });
 
-    test('Vorhandenes Buch aendern, aber mit ungueltigen Daten', async () => {
+    test('Vorhandenen Film aendern, aber mit ungueltigen Daten', async () => {
         // given
         const url = `${restURL}/${idVorhanden}`;
         const headers = new Headers();
@@ -146,19 +110,18 @@ describe('PUT /rest/:id', () => {
         headers.append(IF_MATCH, '"0"');
         headers.append(AUTHORIZATION, `${BEARER} ${token}`);
         const expectedMsg = [
-            expect.stringMatching(/^isbn /u),
-            expect.stringMatching(/^rating /u),
+            expect.stringMatching(/^imdbId /u),
+            expect.stringMatching(/^titel /u),
+            expect.stringMatching(/^bewertung /u),
             expect.stringMatching(/^art /u),
-            expect.stringMatching(/^preis /u),
-            expect.stringMatching(/^rabatt /u),
-            expect.stringMatching(/^datum /u),
-            expect.stringMatching(/^homepage /u),
+            expect.stringMatching(/^dauerMin /u),
+            expect.stringMatching(/^erscheinungsdatum /u),
         ];
 
         // when
         const response = await fetch(url, {
             method: PUT,
-            body: JSON.stringify(geaendertesBuchInvalid),
+            body: JSON.stringify(geaenderterFilmInvalid),
             headers,
         });
 
@@ -173,7 +136,7 @@ describe('PUT /rest/:id', () => {
         expect(messages).toStrictEqual(expect.arrayContaining(expectedMsg));
     });
 
-    test('Vorhandenes Buch aendern, aber ohne Versionsnummer', async () => {
+    test('Vorhandenen Film aendern, aber ohne Versionsnummer', async () => {
         // given
         const url = `${restURL}/${idVorhanden}`;
         const headers = new Headers();
@@ -183,7 +146,7 @@ describe('PUT /rest/:id', () => {
         // when
         const response = await fetch(url, {
             method: PUT,
-            body: JSON.stringify(geaendertesBuch),
+            body: JSON.stringify(geaenderterFilm),
             headers,
         });
 
@@ -195,7 +158,7 @@ describe('PUT /rest/:id', () => {
         expect(body).toBe(`Header "${IF_MATCH}" fehlt`);
     });
 
-    test('Vorhandenes Buch aendern, aber mit alter Versionsnummer', async () => {
+    test('Vorhandenen Film aendern, aber mit alter Versionsnummer', async () => {
         // given
         const url = `${restURL}/${idVorhanden}`;
         const headers = new Headers();
@@ -206,7 +169,7 @@ describe('PUT /rest/:id', () => {
         // when
         const response = await fetch(url, {
             method: PUT,
-            body: JSON.stringify(veraltesBuch),
+            body: JSON.stringify(veralteterFilm),
             headers,
         });
 
@@ -222,7 +185,7 @@ describe('PUT /rest/:id', () => {
         expect(statusCode).toBe(HttpStatus.PRECONDITION_FAILED);
     });
 
-    test('Vorhandenes Buch aendern, aber ohne Token', async () => {
+    test('Vorhandenen Film aendern, aber ohne Token', async () => {
         // given
         const url = `${restURL}/${idVorhanden}`;
         const headers = new Headers();
@@ -232,7 +195,7 @@ describe('PUT /rest/:id', () => {
         // when
         const { status } = await fetch(url, {
             method: PUT,
-            body: JSON.stringify(geaendertesBuch),
+            body: JSON.stringify(geaenderterFilm),
             headers,
         });
 
@@ -240,7 +203,7 @@ describe('PUT /rest/:id', () => {
         expect(status).toBe(HttpStatus.UNAUTHORIZED);
     });
 
-    test('Vorhandenes Buch aendern, aber mit falschem Token', async () => {
+    test('Vorhandenen Film aendern, aber mit falschem Token', async () => {
         // given
         const url = `${restURL}/${idVorhanden}`;
         const headers = new Headers();
@@ -251,7 +214,7 @@ describe('PUT /rest/:id', () => {
         // when
         const { status } = await fetch(url, {
             method: PUT,
-            body: JSON.stringify(geaendertesBuch),
+            body: JSON.stringify(geaenderterFilm),
             headers,
         });
 

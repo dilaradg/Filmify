@@ -1,19 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-// Copyright (C) 2016 - present Juergen Zimmermann, Hochschule Karlsruhe
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
-
 import { HttpStatus } from '@nestjs/common';
 import { beforeAll, describe, expect, test } from 'vitest';
 import {
@@ -33,7 +17,7 @@ import { getToken } from './token.mjs';
 // -----------------------------------------------------------------------------
 // T e s t d a t e n
 // -----------------------------------------------------------------------------
-const idLoeschen = '60';
+const idLoeschen = '1012';
 
 type CreateSuccessType = {
     data: { create: { id: string } };
@@ -67,30 +51,34 @@ describe('GraphQL Mutations', () => {
     });
 
     // -------------------------------------------------------------------------
-    test('Neues Buch', async () => {
+    test('Neuer Film', async () => {
         // given
         const mutation: GraphQLQuery = {
             query: `
                 mutation {
                     create(
                         input: {
-                            isbn: "978-1-491-95035-7",
-                            rating: 1,
-                            art: EPUB,
-                            preis: 99.99,
-                            rabatt: 0.0123,
-                            lieferbar: true,
-                            datum: "2022-02-28T00:00:00Z",
-                            homepage: "https://create.mutation",
-                            schlagwoerter: ["JAVASCRIPT", "TYPESCRIPT"],
-                            titel: {
-                                titel: "Titelcreatemutation",
-                                untertitel: "untertitelcreatemutation"
+                            imdbId: "tt7654321",
+                            titel: "GraphQL Test Film",
+                            bewertung: 5,
+                            art: DRAMA,
+                            dauerMin: 130,
+                            erscheinungsdatum: "2024-03-15T00:00:00Z",
+                            beschreibung: {
+                                beschreibung: "Ein spannender Film für GraphQL Tests."
                             },
-                            abbildungen: [{
-                                beschriftung: "Abb. 1",
-                                contentType: "img/png"
-                            }]
+                            schauspieler: [
+                                {
+                                    vorname: "Leonardo",
+                                    nachname: "DiCaprio",
+                                    rolle: "Hauptrolle"
+                                },
+                                {
+                                    vorname: "Kate",
+                                    nachname: "Winslet",
+                                    rolle: "Nebenrolle"
+                                }
+                            ]
                         }
                     ) {
                         id
@@ -133,23 +121,21 @@ describe('GraphQL Mutations', () => {
     });
 
     // -------------------------------------------------------------------------
-    test('Buch mit ungueltigen Werten neu anlegen', async () => {
+    test('Film mit ungueltigen Werten neu anlegen', async () => {
         // given
         const mutation: GraphQLQuery = {
             query: `
                 mutation {
                     create(
                         input: {
-                            isbn: "falsche-ISBN",
-                            rating: -1,
-                            art: EPUB,
-                            preis: -1,
-                            rabatt: 2,
-                            lieferbar: false,
-                            datum: "12345-123-123",
-                            homepage: "anyHomepage",
-                            titel: {
-                                titel: "?!"
+                            imdbId: "falsche-imdb-id",
+                            titel: "",
+                            bewertung: -1,
+                            art: DRAMA,
+                            dauerMin: -50,
+                            erscheinungsdatum: "12345-123-123",
+                            beschreibung: {
+                                beschreibung: ""
                             }
                         }
                     ) {
@@ -159,13 +145,12 @@ describe('GraphQL Mutations', () => {
             `,
         };
         const expectedMsg = [
-            expect.stringMatching(/^isbn /u),
-            expect.stringMatching(/^rating /u),
-            expect.stringMatching(/^preis /u),
-            expect.stringMatching(/^rabatt /u),
-            expect.stringMatching(/^datum /u),
-            expect.stringMatching(/^homepage /u),
-            expect.stringMatching(/^titel.titel /u),
+            expect.stringMatching(/^imdbId /u),
+            expect.stringMatching(/^titel /u),
+            expect.stringMatching(/^bewertung /u),
+            expect.stringMatching(/^dauerMin /u),
+            expect.stringMatching(/^erscheinungsdatum /u),
+            expect.stringMatching(/^beschreibung.beschreibung /u),
         ];
         const headers = new Headers();
         headers.append(CONTENT_TYPE, APPLICATION_JSON);
@@ -205,24 +190,21 @@ describe('GraphQL Mutations', () => {
     });
 
     // -------------------------------------------------------------------------
-    test('Buch aktualisieren', async () => {
+    test('Film aktualisieren', async () => {
         // given
         const mutation: GraphQLQuery = {
             query: `
                 mutation {
                     update(
                         input: {
-                            id: "40",
+                            id: "1000",
                             version: 0,
-                            isbn: "978-0-007-09732-6",
-                            rating: 5,
-                            art: HARDCOVER,
-                            preis: 444.44,
-                            rabatt: 0.099,
-                            lieferbar: false,
-                            datum: "2025-04-04T00:00:00Z",
-                            homepage: "https://update.mutation"
-                            schlagwoerter: ["JAVA", "PYTHON"],
+                            imdbId: "tt0449059",
+                            titel: "Little Miss Sunshine - Updated",
+                            bewertung: 4,
+                            art: ROMCOM,
+                            dauerMin: 105,
+                            erscheinungsdatum: "2006-08-01T00:00:00Z"
                         }
                     ) {
                         version
@@ -261,9 +243,9 @@ describe('GraphQL Mutations', () => {
     });
 
     // -------------------------------------------------------------------------
-    test('Buch mit ungueltigen Werten aktualisieren', async () => {
+    test('Film mit ungueltigen Werten aktualisieren', async () => {
         // given
-        const id = '40';
+        const id = '1000';
         const mutation: GraphQLQuery = {
             query: `
                 mutation {
@@ -271,15 +253,12 @@ describe('GraphQL Mutations', () => {
                         input: {
                             id: "${id}",
                             version: 0,
-                            isbn: "falsche-ISBN",
-                            rating: -1,
-                            art: EPUB,
-                            preis: -1,
-                            rabatt: 2,
-                            lieferbar: false,
-                            datum: "12345-123-123",
-                            homepage: "anyHomepage",
-                            schlagwoerter: ["JAVASCRIPT", "TYPESCRIPT"]
+                            imdbId: "falsche-imdb-id",
+                            titel: "",
+                            bewertung: -1,
+                            art: DRAMA,
+                            dauerMin: -50,
+                            erscheinungsdatum: "12345-123-123"
                         }
                     ) {
                         version
@@ -288,12 +267,11 @@ describe('GraphQL Mutations', () => {
             `,
         };
         const expectedMsg = [
-            expect.stringMatching(/^isbn /u),
-            expect.stringMatching(/^rating /u),
-            expect.stringMatching(/^preis /u),
-            expect.stringMatching(/^rabatt /u),
-            expect.stringMatching(/^datum /u),
-            expect.stringMatching(/^homepage /u),
+            expect.stringMatching(/^imdbId /u),
+            expect.stringMatching(/^titel /u),
+            expect.stringMatching(/^bewertung /u),
+            expect.stringMatching(/^dauerMin /u),
+            expect.stringMatching(/^erscheinungsdatum /u),
         ];
         const headers = new Headers();
         headers.append(CONTENT_TYPE, APPLICATION_JSON);
@@ -330,7 +308,7 @@ describe('GraphQL Mutations', () => {
     });
 
     // -------------------------------------------------------------------------
-    test('Nicht-vorhandenes Buch aktualisieren', async () => {
+    test('Nicht-vorhandenen Film aktualisieren', async () => {
         // given
         const id = '999999';
         const mutation: GraphQLQuery = {
@@ -340,15 +318,12 @@ describe('GraphQL Mutations', () => {
                         input: {
                             id: "${id}",
                             version: 0,
-                            isbn: "978-0-007-09732-6",
-                            rating: 5,
-                            art: EPUB,
-                            preis: 99.99,
-                            rabatt: 0.099,
-                            lieferbar: false,
-                            datum: "2021-01-02T00:00:00Z",
-                            homepage: "https://acme.com",
-                            schlagwoerter: ["JAVASCRIPT", "TYPESCRIPT"]
+                            imdbId: "tt9999999",
+                            titel: "Nicht existierender Film",
+                            bewertung: 3,
+                            art: ACTION,
+                            dauerMin: 90,
+                            erscheinungsdatum: "2024-01-01T00:00:00Z"
                         }
                     ) {
                         version
@@ -388,7 +363,7 @@ describe('GraphQL Mutations', () => {
         const { message, path, extensions } = error!;
 
         expect(message).toBe(
-            `Es gibt kein Buch mit der ID ${id.toLowerCase()}.`,
+            `Es gibt keinen Film mit der ID ${id.toLowerCase()}.`,
         );
         expect(path).toBeDefined();
         expect(path![0]).toBe('update');
@@ -397,7 +372,7 @@ describe('GraphQL Mutations', () => {
     });
 
     // -------------------------------------------------------------------------
-    test('Buch loeschen', async () => {
+    test('Film loeschen', async () => {
         // given
         const mutation: GraphQLQuery = {
             query: `
@@ -436,7 +411,7 @@ describe('GraphQL Mutations', () => {
     });
 
     // -------------------------------------------------------------------------
-    test('Buch loeschen als "user"', async () => {
+    test('Film loeschen als "user"', async () => {
         // given
         const mutation: GraphQLQuery = {
             query: `
