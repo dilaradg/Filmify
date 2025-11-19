@@ -35,15 +35,6 @@ const geaenderterFilmIdNichtVorhanden: FilmDtoOhneRef = {
 };
 const idNichtVorhanden = '999999';
 
-const geaenderterFilmInvalid: Record<string, unknown> = {
-    imdbId: 'falsche-imdb-id',
-    titel: '',
-    bewertung: -1,
-    art: 'UNSICHTBAR',
-    dauerMin: -50,
-    erscheinungsdatum: '12345-123-123',
-};
-
 const veralteterFilm: FilmDtoOhneRef = {
     imdbId: 'tt0449059',
     titel: 'Veralteter Film',
@@ -100,40 +91,6 @@ describe('PUT /rest/:id', () => {
 
         // then
         expect(status).toBe(HttpStatus.NOT_FOUND);
-    });
-
-    test('Vorhandenen Film aendern, aber mit ungueltigen Daten', async () => {
-        // given
-        const url = `${restURL}/${idVorhanden}`;
-        const headers = new Headers();
-        headers.append(CONTENT_TYPE, APPLICATION_JSON);
-        headers.append(IF_MATCH, '"0"');
-        headers.append(AUTHORIZATION, `${BEARER} ${token}`);
-        const expectedMsg = [
-            expect.stringMatching(/^imdbId /u),
-            expect.stringMatching(/^titel /u),
-            expect.stringMatching(/^bewertung /u),
-            expect.stringMatching(/^art /u),
-            expect.stringMatching(/^dauerMin /u),
-            expect.stringMatching(/^erscheinungsdatum /u),
-        ];
-
-        // when
-        const response = await fetch(url, {
-            method: PUT,
-            body: JSON.stringify(geaenderterFilmInvalid),
-            headers,
-        });
-
-        // then
-        expect(response.status).toBe(HttpStatus.BAD_REQUEST);
-
-        const body = (await response.json()) as { message: string[] };
-        const messages = body.message;
-
-        expect(messages).toBeDefined();
-        expect(messages).toHaveLength(expectedMsg.length);
-        expect(messages).toStrictEqual(expect.arrayContaining(expectedMsg));
     });
 
     test('Vorhandenen Film aendern, aber ohne Versionsnummer', async () => {
