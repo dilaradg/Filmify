@@ -68,10 +68,12 @@ enum Art {
 
 "Suchparameter für Filme"
 input SuchparameterInput {
-  titel: String
-  imdbId: String
+  imdbId: String!
+  titel: String!
   bewertung: Int
   art: Art
+  dauerMin: Int
+  erscheinungsdatum: String
 }
 
 "Daten für einen neuen Film"
