@@ -16,6 +16,8 @@
 import { Module } from '@nestjs/common';
 import { MailModule } from '../mail/module.js';
 import { KeycloakModule } from '../security/keycloak/module.js';
+import { FilmController } from './controller/film-controller.js';
+import { FilmWriteController } from './controller/film-write-controller.js';
 import { FilmMutationResolver } from './resolver/mutation.js';
 import { FilmQueryResolver } from './resolver/query.js';
 import { FilmService } from './service/film-service.js';
@@ -35,6 +37,7 @@ import { WhereBuilder } from './service/where-builder.js';
  */
 @Module({
     imports: [KeycloakModule, MailModule],
+    controllers: [FilmController, FilmWriteController],
     // Provider sind z.B. Service-Klassen fuer DI
     providers: [
         FilmService,
