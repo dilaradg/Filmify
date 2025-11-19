@@ -78,16 +78,10 @@ export class FilmQueryResolver {
         this.#logger.debug('find: input=%s', JSON.stringify(input));
         const pageable = createPageable({});
         const suchparameter = input?.suchparameter;
-        if (suchparameter !== undefined) {
-            const { lieferbar } = suchparameter;
-            if (lieferbar !== undefined) {
-                // Boole'scher Wert bei GraphQL-Query
-                // String bei Query-Parameter bei REST
-                (suchparameter as any).lieferbar = lieferbar.toString();
-            }
-        }
+
         const filmeSlice: Readonly<Slice<Readonly<FilmMitBeschreibung>>> =
             await this.#service.find(suchparameter as any, pageable);
+
         this.#logger.debug('find: filmeSlice=%o', filmeSlice);
         return filmeSlice.content;
     }
