@@ -23,10 +23,19 @@ import {
     type FilmMitBeschreibung,
     type FilmMitBeschreibungUndSchauspieler,
 } from '../service/film-service.js';
+import { createPageable } from '../service/pageable.js';
 import { HttpExceptionFilter } from './http-exception-filter.js';
+import { Slice } from '../service/slice.js';
+import { Suchparameter } from '../service/suchparameter.js';
 
 export type IdInput = {
     readonly id: string;
+};
+
+export type SuchparameterInput = {
+    readonly suchparameter: Omit<Suchparameter, 'lieferbar'> & {
+        lieferbar: boolean | undefined;
+    };
 };
 
 @Resolver('Film')
@@ -63,13 +72,23 @@ export class FilmQueryResolver {
 
     @Query('filme')
     @Public()
-    async find(): Promise<FilmMitBeschreibung[]> {
-        this.#logger.debug('find: alle Filme');
-
-        const filme: readonly FilmMitBeschreibung[] =
-            await this.#service.findAll();
-
-        this.#logger.debug('find: filme=%o', filme);
-        return filme as FilmMitBeschreibung[];
+    async find(
+        @Args() input: SuchparameterInput | undefined,
+    ): Promise<FilmMitBeschreibung[]> {
+        this.#logger.debug('find: input=%s', JSON.stringify(input));
+        const pageable = createPageable({});
+        const suchparameter = input?.suchparameter;
+        if (suchparameter !== undefined) {
+            const { lieferbar } = suchparameter;
+            if (lieferbar !== undefined) {
+                // Boole'scher Wert bei GraphQL-Query
+                // String bei Query-Parameter bei REST
+                (suchparameter as any).lieferbar = lieferbar.toString();
+            }
+        }
+        const filmeSlice: Readonly<Slice<Readonly<FilmMitBeschreibung>>> =
+            await this.#service.find(suchparameter as any, pageable);
+        this.#logger.debug('find: filmeSlice=%o', filmeSlice);
+        return filmeSlice.content;
     }
 }
