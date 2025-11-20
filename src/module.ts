@@ -20,21 +20,21 @@ import { RequestLoggerMiddleware } from './logger/request-logger.js';
 import { KeycloakModule } from './security/keycloak/module.js';
 
 @Module({
-  imports: [
-    AdminModule,
-    FilmModule,
-    ConfigModule,
-    DevModule,
-    GraphQLModule.forRoot<ApolloDriverConfig>(graphQlModuleOptions),
-    LoggerModule,
-    KeycloakModule,
-  ],
+    imports: [
+        AdminModule,
+        FilmModule,
+        ConfigModule,
+        DevModule,
+        GraphQLModule.forRoot<ApolloDriverConfig>(graphQlModuleOptions),
+        LoggerModule,
+        KeycloakModule,
+    ],
 })
 export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(RequestLoggerMiddleware)
-      // GraphQL-Endpunkt + evtl. Auth abfangen, keine Controller mehr nötig
-      .forRoutes(FilmController, FilmWriteController, 'auth', 'graphql');
-  }
+    configure(consumer: MiddlewareConsumer) {
+        consumer
+            .apply(RequestLoggerMiddleware)
+            // GraphQL-Endpunkt + evtl. Auth abfangen, keine Controller mehr nötig
+            .forRoutes(FilmController, FilmWriteController, 'auth', 'graphql');
+    }
 }

@@ -86,7 +86,9 @@ export class WhereBuilder {
                     where.art = { equals: value as Filmart };
                     break;
                 case 'erscheinungsdatum':
-                    where.erscheinungsdatum = { gte: new Date(value as string) };
+                    where.erscheinungsdatum = {
+                        gte: new Date(value as string),
+                    };
                     break;
             }
         });

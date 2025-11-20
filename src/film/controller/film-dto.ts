@@ -43,7 +43,9 @@ export class FilmDtoOhneRef {
     @ApiProperty({ example: 5, type: Number })
     readonly bewertung!: number;
 
-    @Matches(/^(ROMCOM|THRILLER|DRAMA|HORROR|ANIME|ANIMATION|ACTION|FANTASY|SCI_FI|MYSTERY|BIOGRAFIE)$/u)
+    @Matches(
+        /^(ROMCOM|THRILLER|DRAMA|HORROR|ANIME|ANIMATION|ACTION|FANTASY|SCI_FI|MYSTERY|BIOGRAFIE)$/u,
+    )
     @IsOptional()
     @ApiProperty({ example: 'ROMCOM', type: String })
     readonly art: Filmart | undefined;
