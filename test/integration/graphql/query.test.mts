@@ -25,38 +25,37 @@ import {
     POST,
     graphqlURL,
 } from '../constants.mjs';
-import { Buchart, type Prisma } from '../../../src/generated/prisma/client.js';
+import { type Prisma } from '../../../src/generated/prisma/client.js';
 
-export type BuchDTO = Omit<
-    Prisma.BuchGetPayload<{
-        include: {
+export type FilmDTO = Omit<
+    Prisma.FilmGetPayload<{
+        select: {
+            id: true;
+            version: true;
+            imdbId: true;
             titel: true;
+            bewertung: true;
+            art: true;
+            dauerMin: true;
+            erscheinungsdatum: true;
         };
     }>,
-    'aktualisiert' | 'erzeugt' | 'rabatt'
+    'aktualisiert' | 'erzeugt'
 >;
 
-type BuchSuccessType = { data: { buch: BuchDTO }; errors?: undefined };
-type BuecherSuccessType = { data: { buecher: BuchDTO[] }; errors?: undefined };
+type FilmSuccessType = { data: { film: FilmDTO }; errors?: undefined };
 
 export type ErrorsType = {
     message: string;
     path: string[];
     extensions: { code: string };
 }[];
-type BuchErrorsType = { data: { buch: null }; errors: ErrorsType };
-type BuecherErrorsType = { data: { buecher: null }; errors: ErrorsType };
+type FilmErrorsType = { data: { film: null }; errors: ErrorsType };
 
 // -----------------------------------------------------------------------------
 // T e s t d a t e n
 // -----------------------------------------------------------------------------
-const ids = [1, 20];
-
-const titelArray = ['a', 'l', 't'];
-const titelNichtVorhanden = ['xxx', 'yyy', 'zzz'];
-const isbns = ['978-3-897-22583-1', '978-3-827-31552-6', '978-0-201-63361-0'];
-const ratingMin = [3, 4];
-const ratingNichtVorhanden = 99;
+const ids = [1000, 1021];
 
 // -----------------------------------------------------------------------------
 // T e s t s
@@ -71,25 +70,19 @@ describe('GraphQL Queries', () => {
         headers.append(ACCEPT, GRAPHQL_RESPONSE_JSON);
     });
 
-    test.concurrent.each(ids)('Buch zu ID %i', async (id) => {
+    test.concurrent.each(ids)('Film zu ID %i', async (id) => {
         // given
         const query: GraphQLRequest = {
             query: `
                 {
-                    buch(id: "${id}") {
+                    film(id: "${id}") {
                         version
-                        isbn
-                        rating
+                        imdbId
+                        bewertung
                         art
-                        preis
-                        lieferbar
-                        datum
-                        homepage
-                        schlagwoerter
-                        titel {
-                            titel
-                        }
-                        rabatt(short: true)
+                        dauerMin
+                        erscheinungsdatum
+                        titel
                     }
                 }
             `,
@@ -110,28 +103,26 @@ describe('GraphQL Queries', () => {
             /application\/graphql-response\+json/iu,
         );
 
-        const { data, errors } = (await response.json()) as BuchSuccessType;
+        const { data, errors } = (await response.json()) as FilmSuccessType;
 
         expect(errors).toBeUndefined();
         expect(data).toBeDefined();
 
-        const { buch } = data;
+        const { film } = data;
 
-        expect(buch.titel?.titel).toMatch(/^\w/u);
-        expect(buch.version).toBeGreaterThan(-1);
-        expect(buch.id).toBeUndefined();
+        expect(film.titel).toMatch(/^\w/u);
+        expect(film.version).toBeGreaterThan(-1);
+        expect(film.id).toBeUndefined();
     });
 
-    test.concurrent('Buch zu nicht-vorhandener ID', async () => {
+    test.concurrent('Film zu nicht-vorhandener ID', async () => {
         // given
         const id = '999999';
         const query: GraphQLRequest = {
             query: `
                 {
-                    buch(id: "${id}") {
-                        titel {
-                            titel
-                        }
+                    film(id: "${id}") {
+                        titel
                     }
                 }
             `,
@@ -152,422 +143,19 @@ describe('GraphQL Queries', () => {
             /application\/graphql-response\+json/iu,
         );
 
-        const { data, errors } = (await response.json()) as BuchErrorsType;
+        const { data, errors } = (await response.json()) as FilmErrorsType;
 
-        expect(data.buch).toBeNull();
+        expect(data.film).toBeNull();
         expect(errors).toHaveLength(1);
 
         const [error] = errors;
         const { message, path, extensions } = error!;
 
-        expect(message).toBe(`Es gibt kein Buch mit der ID ${id}.`);
+        expect(message).toBe(`Es gibt keinen Film mit der ID ${id}.`);
         expect(path).toBeDefined();
-        expect(path![0]).toBe('buch');
+        expect(path![0]).toBe('film');
         expect(extensions).toBeDefined();
         expect(extensions!.code).toBe('BAD_USER_INPUT');
-    });
-
-    test.concurrent.each(titelArray)(
-        'Buecher zu Teil-Titel %s',
-        async (titel) => {
-            // given
-            const query: GraphQLRequest = {
-                query: `
-                    {
-                        buecher(suchparameter: {
-                            titel: "${titel}"
-                        }) {
-                            titel {
-                                titel
-                            }
-                        }
-                    }
-                `,
-            };
-
-            // when
-            const response = await fetch(graphqlURL, {
-                method: POST,
-                body: JSON.stringify(query),
-                headers,
-            });
-
-            // then
-            const { status } = response;
-
-            expect(status).toBe(HttpStatus.OK);
-            expect(response.headers.get(CONTENT_TYPE)).toMatch(
-                /application\/graphql-response\+json/iu,
-            );
-
-            const { data, errors } =
-                (await response.json()) as BuecherSuccessType;
-
-            expect(errors).toBeUndefined();
-            expect(data).toBeDefined();
-
-            const { buecher } = data;
-
-            expect(buecher).not.toHaveLength(0);
-
-            buecher
-                .map((buch) => buch.titel)
-                .forEach((t) =>
-                    expect(t?.titel?.toLowerCase()).toStrictEqual(
-                        expect.stringContaining(titel),
-                    ),
-                );
-        },
-    );
-
-    test.concurrent.each(titelNichtVorhanden)(
-        'Buch zu nicht vorhandenem Titel %s',
-        async (titel) => {
-            // given
-            const query: GraphQLRequest = {
-                query: `
-                    {
-                        buecher(suchparameter: {
-                            titel: "${titel}"
-                        }) {
-                            art
-                            titel {
-                                titel
-                            }
-                        }
-                    }
-                `,
-            };
-
-            // when
-            const response = await fetch(graphqlURL, {
-                method: POST,
-                body: JSON.stringify(query),
-                headers,
-            });
-
-            // then
-            const { status } = response;
-
-            expect(status).toBe(HttpStatus.OK);
-            expect(response.headers.get(CONTENT_TYPE)).toMatch(
-                /application\/graphql-response\+json/iu,
-            );
-
-            const { data, errors } =
-                (await response.json()) as BuecherErrorsType;
-
-            expect(data.buecher).toBeNull();
-            expect(errors).toHaveLength(1);
-
-            const [error] = errors;
-            const { message, path, extensions } = error!;
-
-            expect(message).toMatch(/^Keine Buecher gefunden:/u);
-            expect(path).toBeDefined();
-            expect(path![0]).toBe('buecher');
-            expect(extensions).toBeDefined();
-            expect(extensions!.code).toBe('BAD_USER_INPUT');
-        },
-    );
-
-    test.concurrent.each(isbns)(
-        'Buch zu ISBN-Nummer %s',
-        async (isbnExpected) => {
-            // given
-            const query: GraphQLRequest = {
-                query: `
-                    {
-                        buecher(suchparameter: {
-                            isbn: "${isbnExpected}"
-                        }) {
-                            isbn
-                            titel {
-                                titel
-                            }
-                        }
-                    }
-                `,
-            };
-
-            // when
-            const response = await fetch(graphqlURL, {
-                method: POST,
-                body: JSON.stringify(query),
-                headers,
-            });
-
-            // then
-            const { status } = response;
-
-            expect(status).toBe(HttpStatus.OK);
-            expect(response.headers.get(CONTENT_TYPE)).toMatch(
-                /application\/graphql-response\+json/iu,
-            );
-
-            const { data, errors } =
-                (await response.json()) as BuecherSuccessType;
-
-            expect(errors).toBeUndefined();
-            expect(data).toBeDefined();
-
-            const { buecher } = data;
-
-            expect(buecher).not.toHaveLength(0);
-            expect(buecher).toHaveLength(1);
-
-            const [buch] = buecher;
-            const { titel, isbn } = buch!;
-
-            expect(isbn).toBe(isbnExpected);
-            expect(titel?.titel).toBeDefined();
-        },
-    );
-
-    test.concurrent.each(ratingMin)(
-        'Buecher mit Mindest-"rating" %i',
-        async (ratingExpected) => {
-            // given
-            const teilTitel = 'a';
-            const query: GraphQLRequest = {
-                query: `
-                    {
-                        buecher(suchparameter: {
-                            rating: ${ratingExpected},
-                            titel: "${teilTitel}"
-                        }) {
-                            rating
-                            titel {
-                                titel
-                            }
-                        }
-                    }
-                `,
-            };
-
-            // when
-            const response = await fetch(graphqlURL, {
-                method: POST,
-                body: JSON.stringify(query),
-                headers,
-            });
-
-            // then
-            const { status } = response;
-
-            expect(status).toBe(HttpStatus.OK);
-            expect(response.headers.get(CONTENT_TYPE)).toMatch(
-                /application\/graphql-response\+json/iu,
-            );
-
-            const { data, errors } =
-                (await response.json()) as BuecherSuccessType;
-
-            expect(errors).toBeUndefined();
-            expect(data).toBeDefined();
-
-            const { buecher } = data;
-
-            expect(buecher).not.toHaveLength(0);
-
-            buecher.forEach((buch) => {
-                const { rating, titel } = buch;
-
-                expect(rating).toBeGreaterThanOrEqual(ratingExpected);
-                expect(titel?.titel?.toLowerCase()).toStrictEqual(
-                    expect.stringContaining(teilTitel),
-                );
-            });
-        },
-    );
-
-    test.concurrent('Kein Buch zu nicht-vorhandenem "rating"', async () => {
-        // given
-        const query: GraphQLRequest = {
-            query: `
-                {
-                    buecher(suchparameter: {
-                        rating: ${ratingNichtVorhanden}
-                    }) {
-                        titel {
-                            titel
-                        }
-                    }
-                }
-            `,
-        };
-
-        // when
-        const response = await fetch(graphqlURL, {
-            method: POST,
-            body: JSON.stringify(query),
-            headers,
-        });
-
-        // then
-        const { status } = response;
-
-        expect(status).toBe(HttpStatus.OK);
-        expect(response.headers.get(CONTENT_TYPE)).toMatch(
-            /application\/graphql-response\+json/iu,
-        );
-
-        const { data, errors } = (await response.json()) as BuecherErrorsType;
-
-        expect(data.buecher).toBeNull();
-        expect(errors).toHaveLength(1);
-
-        const [error] = errors;
-        const { message, path, extensions } = error!;
-
-        expect(message).toMatch(/^Keine Buecher gefunden:/u);
-        expect(path).toBeDefined();
-        expect(path![0]).toBe('buecher');
-        expect(extensions).toBeDefined();
-        expect(extensions!.code).toBe('BAD_USER_INPUT');
-    });
-
-    test.concurrent('Buecher zur Art "EPUB"', async () => {
-        // given
-        const buchArt: Buchart = 'EPUB';
-        const query: GraphQLRequest = {
-            query: `
-                {
-                    buecher(suchparameter: {
-                        art: ${buchArt}
-                    }) {
-                        art
-                        titel {
-                            titel
-                        }
-                    }
-                }
-            `,
-        };
-
-        // when
-        const response = await fetch(graphqlURL, {
-            method: POST,
-            body: JSON.stringify(query),
-            headers,
-        });
-
-        // then
-        const { status } = response;
-
-        expect(status).toBe(HttpStatus.OK);
-        expect(response.headers.get(CONTENT_TYPE)).toMatch(
-            /application\/graphql-response\+json/iu,
-        );
-
-        const { data, errors } = (await response.json()) as BuecherSuccessType;
-
-        expect(errors).toBeUndefined();
-        expect(data).toBeDefined();
-
-        const { buecher }: { buecher: BuchDTO[] } = data;
-
-        expect(buecher).not.toHaveLength(0);
-
-        buecher.forEach((buch) => {
-            const { art, titel } = buch;
-
-            expect(art).toBe(buchArt);
-            expect(titel?.titel).toBeDefined();
-        });
-    });
-
-    test.concurrent('Buecher zur einer ungueltigen Art', async () => {
-        // given
-        const buchArt = 'UNGUELTIG';
-        const query: GraphQLRequest = {
-            query: `
-                {
-                    buecher(suchparameter: {
-                        art: ${buchArt}
-                    }) {
-                        titel {
-                            titel
-                        }
-                    }
-                }
-            `,
-        };
-
-        // when
-        const response = await fetch(graphqlURL, {
-            method: POST,
-            body: JSON.stringify(query),
-            headers,
-        });
-
-        // then
-        const { status } = response;
-
-        expect(status).toBe(HttpStatus.BAD_REQUEST);
-        expect(response.headers.get(CONTENT_TYPE)).toMatch(
-            /application\/graphql-response\+json/iu,
-        );
-
-        const { data, errors } = (await response.json()) as BuecherErrorsType;
-
-        expect(data).toBeUndefined();
-        expect(errors).toHaveLength(1);
-
-        const [error] = errors;
-        const { extensions } = error!;
-
-        expect(extensions).toBeDefined();
-        expect(extensions!.code).toBe('GRAPHQL_VALIDATION_FAILED');
-    });
-
-    test.concurrent('Buecher mit lieferbar=true', async () => {
-        // given
-        const query: GraphQLRequest = {
-            query: `
-                {
-                    buecher(suchparameter: {
-                        lieferbar: true
-                    }) {
-                        lieferbar
-                        titel {
-                            titel
-                        }
-                    }
-                }
-            `,
-        };
-
-        // when
-        const response = await fetch(graphqlURL, {
-            method: POST,
-            body: JSON.stringify(query),
-            headers,
-        });
-
-        // then
-        const { status } = response;
-
-        expect(status).toBe(HttpStatus.OK);
-        expect(response.headers.get(CONTENT_TYPE)).toMatch(
-            /application\/graphql-response\+json/iu,
-        );
-
-        const { data, errors } = (await response.json()) as BuecherSuccessType;
-
-        expect(errors).toBeUndefined();
-        expect(data).toBeDefined();
-
-        const { buecher }: { buecher: BuchDTO[] } = data;
-
-        expect(buecher).not.toHaveLength(0);
-
-        buecher.forEach((buch) => {
-            const { lieferbar, titel } = buch;
-
-            expect(lieferbar).toBe(true);
-            expect(titel?.titel).toBeDefined();
-        });
     });
 });
 

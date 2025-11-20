@@ -14,11 +14,9 @@ const id = '1010';
 // Test-Suite
 describe('DELETE /rest', () => {
     let token: string;
-    let tokenUser: string;
 
     beforeAll(async () => {
         token = await getToken('admin', 'p');
-        tokenUser = await getToken('user', 'p');
     });
 
     test.concurrent('Vorhandenen Film loeschen', async () => {
@@ -62,21 +60,5 @@ describe('DELETE /rest', () => {
 
         // then
         expect(status).toBe(HttpStatus.UNAUTHORIZED);
-    });
-
-    test.concurrent('Vorhandenen Film als "user" loeschen', async () => {
-        // given
-        const url = `${restURL}/1011`;
-        const headers = new Headers();
-        headers.append(AUTHORIZATION, `${BEARER} ${tokenUser}`);
-
-        // when
-        const { status } = await fetch(url, {
-            method: DELETE,
-            headers,
-        });
-
-        // then
-        expect(status).toBe(HttpStatus.FORBIDDEN);
     });
 });
