@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-/* eslint-disable @typescript-eslint/no-non-null-assertion*/
-=======
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
->>>>>>> de5420d83493437b279f47a19162704ffc90c57f
 import { HttpStatus } from '@nestjs/common';
 import { beforeAll, describe, expect, test } from 'vitest';
 import {
