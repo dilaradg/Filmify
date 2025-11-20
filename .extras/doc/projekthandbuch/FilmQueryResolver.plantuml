@@ -31,41 +31,41 @@ package @nestjs/graphql {
 
 package generated.prisma {
   class Prisma
-  class BuchGetPayload<T>
-  Prisma +-- BuchGetPayload
+  class FilmGetPayload<T>
+  Prisma +-- FilmGetPayload
 }
 
-package buch {
+package film {
   package service {
-    class BuchService << control >>
+    class FilmService << control >>
   }
 
   package graphql #DDDDDD {
-    class "type BuchDTO = Omit<Buch, 'abbildungen' | 'aktualisiert' | 'erzeugt'" as BuchDTO
-    hide BuchDTO circle
+    class "type FilmDTO = Omit<Film, 'schauspieler' | 'aktualisiert' | 'erzeugt'" as FilmDTO
+    hide FilmDTO circle
 
     interface IdInput {
         id: number
     }
 
-    class BuchQueryResolver << control >> << @Resolver() >> << @UseInterceptors() >> {
-      + @Query() async buch(@Args() id: IdInput): Promise<Readonly<BuchGetPayload>>
-      + @Query() async buecher(@Args() titel: string | undefined): Promise<BuchDTO[]>
+    class FilmQueryResolver << control >> << @Resolver() >> << @UseInterceptors() >> {
+      + @Query() async film(@Args() id: IdInput): Promise<Readonly<FilmGetPayload>>
+      + @Query() async filme(@Args() beschreibung: string | undefined): Promise<FilmDTO[]>
     }
 
-    BuchQueryResolver o-down-> "1" BuchService : service
-    BuchQueryResolver ..> BuchDTO
-    BuchQueryResolver ..> IdInput
-    BuchQueryResolver .up.> Resolver
+    FilmQueryResolver o-down-> "1" FilmService : service
+    FilmQueryResolver ..> FilmDTO
+    FilmQueryResolver ..> IdInput
+    FilmQueryResolver .up.> Resolver
 
-    BuchQueryResolver .up.> Promise
-    BuchQueryResolver .up.> Readonly
+    FilmQueryResolver .up.> Promise
+    FilmQueryResolver .up.> Readonly
 
-    BuchQueryResolver .up.> BuchGetPayload
+    FilmQueryResolver .up.> FilmGetPayload
 
-    IdInput .down[hidden].> BuchService
-    BuchService .down[hidden].> Prisma
-    BuchService .down[hidden].> BuchGetPayload
+    IdInput .down[hidden].> FilmService
+    FilmService .down[hidden].> Prisma
+    FilmService .down[hidden].> FilmGetPayload
   }
 }
 

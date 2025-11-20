@@ -19,13 +19,13 @@
 
 actor Gast
 
-boundary BuchController
-control BuchService
-database buch
+boundary FilmController
+control FilmService
+database film
 
-Gast -> BuchController : GET / getById()
-BuchController -> BuchService: findById()
-BuchService -> buch: [Prisma]
+Gast -> FilmController : GET / getById()
+FilmController -> FilmService: findById()
+FilmService -> film: [Prisma]
 
 footer (c) Jürgen Zimmermann
 

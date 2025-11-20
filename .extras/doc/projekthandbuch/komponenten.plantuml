@@ -25,10 +25,10 @@ actor GraphQLClient
 node "Nest" {
   [RequestLoggerMiddleware]
 
-  [BuchController]
-  [BuchResolver]
+  [FilmController]
+  [FilmResolver]
 
-  [BuchService]
+  [FilmService]
 
   [PrismaClient]
 
@@ -48,8 +48,8 @@ cloud {
     [nodemailer]
 }
 
-database "DB buch" {
-    [Tabelle buch]
+database "DB film" {
+    [Tabelle film]
     [Tabelle titel]
     [Tabelle abbildung]
 }
@@ -65,22 +65,22 @@ node {
 RESTClient ~~> [RequestLoggerMiddleware]
 GraphQLClient ~~> [RequestLoggerMiddleware]
 
-[RequestLoggerMiddleware] ~~> [BuchController]
-[RequestLoggerMiddleware] ~~> [BuchResolver]
+[RequestLoggerMiddleware] ~~> [FilmController]
+[RequestLoggerMiddleware] ~~> [FilmResolver]
 
-[BuchController] ..> [BuchService]
-[BuchResolver] ..> [BuchService]
-[BuchService] ..> [PrismaClient]
+[FilmController] ..> [FilmService]
+[FilmResolver] ..> [FilmService]
+[FilmService] ..> [PrismaClient]
 
 [PrismaClient] ~~> [Prisma]
-[Prisma] ~~> [Tabelle buch]
+[Prisma] ~~> [Tabelle film]
 [Prisma] ~~> [Tabelle titel]
 [Prisma] ~~> [Tabelle abbildung]
 
-[BuchController] ..> [nest-keycloak-connect]
+[FilmController] ..> [nest-keycloak-connect]
 [nest-keycloak-connect] ~~> [Keycloak]
 
-[BuchService] ..> [MailService]
+[FilmService] ..> [MailService]
 [MailService] ~~> [nodemailer]
 [nodemailer] ~~> [Mailserver]
 

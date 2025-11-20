@@ -36,22 +36,24 @@ entity "Film" {
   * aktualisiert: timestamp
 }
 
-entity "Titel" {
+entity "Beschreibung" {
   * id: integer <<generated>>
   --
-  * titel: text
+  * beschreibung: text
+  * film_id: integer <<FK>> <<unique>>
 }
 
-entity "Abbildung" {
+entity "Schauspieler" {
   * id: integer <<generated>>
   --
-  * beschriftung: text
-    contentType: text
+  * vorname: text
+  * nachname: text
+  * rolle: text
   * **film_id**: integer <<FK>>
 }
 
-Film ||..|| Titel
-Film ||..o{ Abbildung
+Film ||..|| Beschreibung
+Film ||..o{ Schauspieler
 
 footer (c) Jürgen Zimmermann
 

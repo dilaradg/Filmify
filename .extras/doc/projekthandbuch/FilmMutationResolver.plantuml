@@ -32,37 +32,35 @@ package nest-keycloak-connect {
   annotation Roles
 }
 
-package buch #DDDDDD {
+package film #DDDDDD {
   package service #FFFFFF {
-    class BuchWriteService << control >>
+    class FilmWriteService << control >>
   }
 
-  class BuchDtoOhneRef << entity >>
-  class BuchDTO << entity >>
-  BuchDtoOhneRef <|-- BuchDTO
+  class FilmDtoOhneRef << entity >>
+  class FilmDTO << entity >>
+  FilmDtoOhneRef <|-- FilmDTO
 
   interface IdInput {
       id: number
   }
 
-  class BuchMutationResolver << control >> << @Resolver() >> << @UseGuards() >> << @UseInterceptors() >> {
-    + @Mutation() @Roles() async create(@Args() buchDTO: BuchDTO): Promise<number>
-    + @Mutation() @Roles() async update(@Args() buchDTO: BuchDtoOhneRef): Promise<number>
+  class FilmMutationResolver << control >> << @Resolver() >> << @UseGuards() >> << @UseInterceptors() >> {
+    + @Mutation() @Roles() async create(@Args() filmDTO: FilmDTO): Promise<number>
+    + @Mutation() @Roles() async update(@Args() filmDTO: FilmDtoOhneRef): Promise<number>
     + @Mutation() @Roles() async delete(@Args() id: IdInput): Promise<boolean>
   }
 
-  BuchMutationResolver o-down-> "1" BuchWriteService : service
+  FilmMutationResolver o-down-> "1" FilmWriteService : service
 
-  BuchMutationResolver ..> BuchDTO
-  BuchMutationResolver ..> BuchDtoOhneRef
-  BuchMutationResolver ..> IdInput
+  FilmMutationResolver ..> FilmDTO
+  FilmMutationResolver ..> FilmDtoOhneRef
+  FilmMutationResolver ..> IdInput
 
-  BuchMutationResolver .up.> Promise
+  FilmMutationResolver .up.> Resolver
 
-  BuchMutationResolver .up.> Resolver
-
-  BuchMutationResolver .up.> AuthGuard
-  BuchMutationResolver .up.> Roles
+  FilmMutationResolver .up.> AuthGuard
+  FilmMutationResolver .up.> Roles
 
   Roles .right[hidden].> Resolver
 }
