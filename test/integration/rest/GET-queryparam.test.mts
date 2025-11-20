@@ -50,39 +50,44 @@ describe('GET /rest', () => {
             });
     });
 
-    test.concurrent.each(imdbIds)('Film mit IMDB-ID %s suchen', async (imdbId) => {
-        // given
-        const params = new URLSearchParams({ imdbId });
-        const url = `${restURL}?${params}`;
+    test.concurrent.each(imdbIds)(
+        'Film mit IMDB-ID %s suchen',
+        async (imdbId) => {
+            // given
+            const params = new URLSearchParams({ imdbId });
+            const url = `${restURL}?${params}`;
 
-        // when
-        const response = await fetch(url);
-        const { status, headers } = response;
+            // when
+            const response = await fetch(url);
+            const { status, headers } = response;
 
-        // then
-        expect(status).toBe(HttpStatus.OK);
-        expect(headers.get(CONTENT_TYPE)).toMatch(/json/iu);
+            // then
+            expect(status).toBe(HttpStatus.OK);
+            expect(headers.get(CONTENT_TYPE)).toMatch(/json/iu);
 
-        const body = (await response.json()) as Page<Film>;
+            const body = (await response.json()) as Page<Film>;
 
-        expect(body).toBeDefined();
+            expect(body).toBeDefined();
 
-        // 1 Film mit der ISBN
-        const filme = body.content;
+            // 1 Film mit der ISBN
+            const filme = body.content;
 
-        expect(filme).toHaveLength(1);
+            expect(filme).toHaveLength(1);
 
-        const [film] = filme;
-        const imdbIdFound = film?.imdbId;
+            const [film] = filme;
+            const imdbIdFound = film?.imdbId;
 
-        expect(imdbIdFound).toBe(imdbId);
-    });
+            expect(imdbIdFound).toBe(imdbId);
+        },
+    );
 
     test.concurrent.each(bewertungMin)(
         'Filme mit Mindest-"bewertung" %i suchen',
         async (bewertung) => {
             // given
-            const params = new URLSearchParams({ bewertung: bewertung.toString() });
+            const params = new URLSearchParams({
+                bewertung: bewertung.toString(),
+            });
             const url = `${restURL}?${params}`;
 
             // when

@@ -43,7 +43,6 @@ const neuerFilm: FilmDTO = {
 // -----------------------------------------------------------------------------
 // Test-Suite
 describe('POST /rest', () => {
-
     test.concurrent('Neuer Film, aber ohne Token', async () => {
         // when
         const { status } = await fetch(restURL, {
