@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 /**
  * Das Modul besteht aus der Controller-Klasse für Schreiben an der REST-Schnittstelle.
  * @packageDocumentation
@@ -13,9 +14,25 @@ import {
     Post,
     Put,
     Res,
+    UseGuards,
     UseInterceptors,
 } from '@nestjs/common';
+import {
+    ApiBadRequestResponse,
+    ApiBearerAuth,
+    ApiCreatedResponse,
+    ApiForbiddenResponse,
+    ApiHeader,
+    ApiNoContentResponse,
+    ApiNotFoundResponse,
+    ApiOperation,
+    ApiParam,
+    ApiPreconditionFailedResponse,
+    ApiResponse,
+    ApiTags,
+} from '@nestjs/swagger';
 import { type Response } from 'express';
+import { AuthGuard, Roles } from 'nest-keycloak-connect';
 import { paths } from '../../config/paths.js';
 import { getLogger } from '../../logger/logger.js';
 import { ResponseTimeInterceptor } from '../../logger/response-time.js';
@@ -26,11 +43,16 @@ import {
 } from '../service/film-write-service.js';
 import { FilmDTO } from './film-dto.js';
 
+const MSG_FORBIDDEN = 'Kein Token mit ausreichender Berechtigung vorhanden';
+
 /**
  * Die Controller-Klasse für die Verwaltung von Filmen (Schreiboperationen).
  */
 @Controller(paths.rest)
+@UseGuards(AuthGuard)
 @UseInterceptors(ResponseTimeInterceptor)
+@ApiTags('Film REST-API')
+@ApiBearerAuth()
 export class FilmWriteController {
     readonly #service: FilmWriteService;
     readonly #logger = getLogger(FilmWriteController.name);
@@ -41,13 +63,13 @@ export class FilmWriteController {
 
     /**
      * Ein neuer Film wird asynchron angelegt.
-     *
-     * @param filmDTO Film-Daten im Body des Request-Objekts.
-     * @param res Leeres Response-Objekt von Express.
-     * @returns Response mit Statuscode 201 und der ID des neu angelegten Films
-     *          oder Statuscode 400, falls die IMDB-ID bereits existiert.
      */
     @Post()
+    @Roles('admin', 'user')
+    @ApiOperation({ summary: 'Einen neuen Film anlegen' })
+    @ApiCreatedResponse({ description: 'Der Film wurde erfolgreich angelegt' })
+    @ApiBadRequestResponse({ description: 'Fehlerhafte oder doppelte IMDB-ID' })
+    @ApiForbiddenResponse({ description: MSG_FORBIDDEN })
     async create(
         @Body() filmDTO: FilmDTO,
         @Res() res: Response,
@@ -64,14 +86,34 @@ export class FilmWriteController {
 
     /**
      * Ein vorhandener Film wird asynchron aktualisiert.
-     *
-     * @param filmDTO Film-Daten im Body des Request-Objekts.
-     * @param id Pfad-Parameter für die ID.
-     * @param version Versionsnummer aus dem Header If-Match.
-     * @param res Leeres Response-Objekt von Express.
-     * @returns Response mit Statuscode 204 oder Statuscode 400, 404 oder 412.
      */
     @Put(':id')
+    @Roles('admin', 'user')
+    @ApiOperation({ summary: 'Einen vorhandenen Film aktualisieren' })
+    @ApiParam({
+        name: 'id',
+        description: 'Film-ID, z.B. 1',
+    })
+    @ApiHeader({
+        name: 'If-Match',
+        description: 'Header für optimistische Synchronisation',
+        required: false,
+    })
+    @ApiNoContentResponse({
+        description: 'Der Film wurde erfolgreich aktualisiert',
+    })
+    @ApiBadRequestResponse({ description: 'Fehlerhafte Filmdaten' })
+    @ApiNotFoundResponse({
+        description: 'Kein Film zur angegebenen ID gefunden',
+    })
+    @ApiPreconditionFailedResponse({
+        description: 'Falsche Version im Header "If-Match"',
+    })
+    @ApiResponse({
+        status: HttpStatus.PRECONDITION_REQUIRED,
+        description: 'Header "If-Match" fehlt',
+    })
+    @ApiForbiddenResponse({ description: MSG_FORBIDDEN })
     async update(
         @Body() filmDTO: FilmDTO,
         @Param('id') id: string,
@@ -111,12 +153,18 @@ export class FilmWriteController {
 
     /**
      * Ein Film wird anhand seiner ID gelöscht.
-     *
-     * @param id Pfad-Parameter für die ID.
-     * @param res Leeres Response-Objekt von Express.
-     * @returns Response mit Statuscode 204 oder Statuscode 404.
      */
     @Delete(':id')
+    @Roles('admin')
+    @ApiOperation({ summary: 'Film mit ID löschen' })
+    @ApiParam({
+        name: 'id',
+        description: 'Film-ID, z.B. 1',
+    })
+    @ApiNoContentResponse({
+        description: 'Der Film wurde gelöscht oder war bereits nicht vorhanden',
+    })
+    @ApiForbiddenResponse({ description: MSG_FORBIDDEN })
     async delete(
         @Param('id') id: string,
         @Res() res: Response,
@@ -168,3 +216,4 @@ export class FilmWriteController {
         };
     }
 }
+/* eslint-enable max-lines */
