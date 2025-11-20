@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion*/
 import { HttpStatus } from '@nestjs/common';
 import { beforeAll, describe, expect, test } from 'vitest';
 import {
