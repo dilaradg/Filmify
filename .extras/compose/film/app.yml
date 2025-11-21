@@ -26,7 +26,7 @@
 # "pg-native" erfordert die Installation von PostgreSQL: Docker-Image genügt nicht
 
 db:
-  populate: true
+  populate: false
 
 # ==============================================================================
 # K e y c l o a k
